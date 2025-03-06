@@ -2,104 +2,138 @@
 <html lang="en">
 
 <head>
-  <title>Homework 7</title>
+  <title>NomNomNow</title>
   <script src="https://d3js.org/d3.v7.min.js"></script>
   <script src="https://d3js.org/topojson.v3.min.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css">
+  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+
   <style>
-    .outline {
-      stroke-width: 1px;
-      fill: none;
-      stroke: white;
+    /* ADD CSS HERE LATER */
+    #map {
+      margin: 0px;
+      height: 900px;
+      width: 55%;
+      float: right;
     }
 
-    .state {
-      fill: lightgrey;
-    }
+    /* #choropleth {
+      position: absolute;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+    } */
   </style>
 </head>
 
 <body>
-  <h1>Homework 7</h1>
-  <h2>Jolly Zheng (jz767)</h2>
-
-  <svg id="choropleth" width="990" height="770" style="margin:20px"></svg>
-  <ul id="lis"></ul>
+  <!-- <svg id="choropleth" width="690" height="470" style="margin:20px"></svg> -->
+  <div class="map-section">
+    <div id="map"></div>
+  </div>
 
   <script>
-    const svg = d3.select("#choropleth");
 
-    const width = svg.attr("width");
-    const height = svg.attr("height");
+    const accessToken = 'pk.eyJ1IjoibmpsNTUiLCJhIjoiY203eHF2cTZzMDF6NDJycHk2NHRsMTBlOCJ9.YsiJ8vNV_ct2Ml_f1hAFLg';
 
-    const margin = { top: 20, right: 20, bottom: 20, left: 20 };
-    const map_height = height - margin.top - margin.bottom;
-    const map_width = width - margin.left - margin.right;
+    const map = L.map('map', {
+      center: [42.3601, -71.0589],
+      zoom: 13,
+      maxBounds: [
+        [42.2800, -71.2000], // Southwest coordinates
+        [42.4500, -70.9500]  // Northeast coordinates, increased north bound
+      ],
+      maxZoom: 18,
+      minZoom: 13
+    });
 
-    const map = svg.append("g")
-      .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+    L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/{z}/{x}/{y}?access_token={accessToken}', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://www.mapbox.com/">Mapbox</a>',
+      tileSize: 512,
+      zoomOffset: -1,
+      accessToken: accessToken
+    }).addTo(map);
 
-    const gData = async function () {
-      const boston_map = await d3.json("data/boston.geojson");
-      //console.log("Loaded dataset:", nyrent);
+    // CHOROPLETH
+    // const map_fill = "#69b3a2"
+    // const map_select = "#ffcc00"
+    // const map_stroke = "white"
 
-      var state = topojson.feature(nyrent, boston_map.objects.state);
-      var zips = topojson.feature(nyrent, boston_map.objects.zip_codes);
-      var zipsMesh = topojson.mesh(nyrent, boston_map.objects.zip_codes);
-      //console.log("State:", state);
-      //console.log("ZIPs:", zips);
-      //console.log("ZIPs Mesh:", zipsMesh);
+    // const map_svg = d3.select("#choropleth");
+    // const width = map_svg.attr("width");
+    // const height = map_svg.attr("height");
+    // const margin = { top: 20, right: 10, bottom: 20, left: 10 };
+    // const map_width = width - margin.left - margin.right;
+    // const map_height = height - margin.top - margin.bottom;
 
-      var projection = d3.geoMercator().fitSize([map_width, map_height], state);
-      var pathies = d3.geoPath().projection(projection);
-      /*
+    const load_map = async function () {
+      // const bostonMap = await d3.json("data/boston.geojson");
+      const yelpData = await d3.csv("data/yelp_boston.csv");
+      console.log(yelpData);
 
-      const monthly_rent = zips.features.map(d => d.properties.median_monthly_rent);
-      //console.log("Monthly rents:", monthly_rent);
+      // CHOROPLETH
+      // const projection = d3.geoMercator().fitSize([width, height], bostonMap);
+      // const path = d3.geoPath().projection(projection);
 
-      const sequential_color = ["#01DBFF", "#25C8EA", "#49B4D6", "#6DA1C1", "#918DAC"];
-      const colorScale = d3.scaleQuantile()
-        .domain(monthly_rent)
-        .range(sequential_color);
-      
-      //console.log("Color Scale Domain:", colorScale.domain());
-      //console.log("Color Scale Range:", colorScale.range());
+      // const g = map_svg.append("g");
 
-      let elems = map.append("g");
+      // g.selectAll("path")
+      //   .data(bostonMap.features)
+      //   .enter().append("path")
+      //   .attr("d", d => path(d))
+      //   .attr("fill", map_fill)
+      //   .attr("stroke", map_stroke)
+      //   .attr("stroke-width", 1)
+      //   .on("mouseover", function (event, d) {
+      //     d3.select(this).attr("fill", map_select);
+      //   })
+      //   .on("mouseout", function (event, d) {
+      //     d3.select(this).attr("fill", map_fill);
+      //   });
 
-      elems.selectAll("path.state").data(state.features)
-        .join("path")
-        .attr("class", "state")
-        .attr("d", pathies);
+      // g.selectAll("circle")
+      //   .data(yelpData)
+      //   .enter().append("circle")
+      //   .attr("cx", d => projection([d.longitude, d.latitude])[0])
+      //   .attr("cy", d => projection([d.longitude, d.latitude])[1])
+      //   .attr("r", 2)
+      //   .attr("fill", "red")
+      //   .attr("stroke", "black")
+      //   .attr("stroke-width", 0.5)
+      //   .on("mouseover", function (event, d) {
+      //     d3.select(this).attr("fill", "yellow");
+      //   })
+      //   .on("mouseout", function (event, d) {
+      //     d3.select(this).attr("fill", "red");
+      //   });
 
-      elems.selectAll("path.zip")
-        .data(zips.features)
-        .join("path")
-        .attr("class", "zip")
-        .attr("d", pathies)
-        .attr("fill", d => colorScale(d.properties.median_monthly_rent));
-
-      elems.append("path")
-        .datum(zipsMesh)
-        .attr("class", "outline")
-        .attr("d", pathies);
-
-      const [cx, cy] = projection([-76.4850, 42.4476]);
-      map.append("circle")
-        .attr("cx", cx)
-        .attr("cy", cy)
-        .attr("r", 5)
-        .style("fill", "black");
-
-      const thresholds = colorScale.quantiles();
-      //console.log("Quantile Thresholds:", thresholds);
-
-      const small = d3.select("#lis");
-      thresholds.forEach(threshold => {
-        small.append("li").text(d3.format("$,.0f")(threshold));
+      // Plot the Yelp data on the Leaflet map
+      yelpData.forEach(d => {
+        L.circleMarker([+d.latitude, +d.longitude], {
+          radius: 3,
+          fillColor: "red",
+          color: "black",
+          weight: 0.5,
+          opacity: .7,
+          fillOpacity: 1
+        }).addTo(map)
+          .on("mouseover", function (event) {
+            this.setStyle({
+              fillColor: "yellow"
+            });
+          })
+          .on("mouseout", function (event) {
+            this.setStyle({
+              fillColor: "red",
+              opacity: .7
+            });
+          });
       });
-      */
-    }
-    gData();
+    };
+
+    load_map();
+
+
   </script>
 </body>
 
