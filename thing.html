@@ -1,0 +1,50 @@
+<svg id="choropleth" width="690" height="470" style="margin:20px"></svg>
+<ul id="lis"></ul>
+
+<script src="https://d3js.org/d3.v6.min.js"></script>
+<script>
+  const map_svg = d3.select("#choropleth");
+  const width = map_svg.attr("width");
+  const height = map_svg.attr("height");
+  const margin = { top: 20, right: 10, bottom: 20, left: 10 };
+  const map_width = width - margin.left - margin.right;
+  const map_height = height - margin.top - margin.bottom;
+
+  const load_map = async function () {
+    // Load GeoJSON data
+    const bostonMap = await d3.json("https://raw.githubusercontent.com/codeforgermany/click_that_hood/main/public/data/boston.geojson");
+
+    // Create a projection
+    const projection = d3.geoMercator()
+      .fitSize([map_width, map_height], bostonMap);
+
+    // Create a path generator
+    const path = d3.geoPath().projection(projection);
+
+    // Append the map
+    map_svg.append("g")
+      .selectAll("path")
+      .data(bostonMap.features)
+      .enter().append("path")
+      .attr("d", path)
+      .attr("stroke", "#333")
+      .attr("fill", "#69b3a2")
+      .attr("opacity", 0.7)
+      .on("mouseover", function (event, d) {
+        d3.select(this).attr("fill", "#ffcc00");
+      })
+      .on("mouseout", function (event, d) {
+        d3.select(this).attr("fill", "#69b3a2");
+      });
+
+    // Add neighborhood names
+    d3.select("#lis")
+      .selectAll("li")
+      .data(bostonMap.features)
+      .enter()
+      .append("li")
+      .text(d => d.properties.name);
+  };
+
+  load_map();
+</script>
