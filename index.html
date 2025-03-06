@@ -5,57 +5,128 @@
   <title>NomNomNow</title>
   <script src="https://d3js.org/d3.v7.min.js"></script>
   <script src="https://d3js.org/topojson.v3.min.js"></script>
-  <!-- add leaflet  -->
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script> 
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css">
+  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+
   <style>
     /* ADD CSS HERE LATER */
+    #map {
+      height: 800px;
+      width: 600px;
+      position: relative;
+    }
+
+    #choropleth {
+      position: absolute;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+    }
   </style>
 </head>
 
 <body>
 
   <svg id="choropleth" width="690" height="470" style="margin:20px"></svg>
-  <ul id="lis"></ul>
+  <div id="map"></div>
 
   <script>
-    // putting this here for easier customization
-    const map_fill = "#69b3a2"
-    const map_select = "#ffcc00"
 
-    const map_svg = d3.select("#choropleth");
-    const width = map_svg.attr("width");
-    const height = map_svg.attr("height");
-    const margin = { top: 20, right: 10, bottom: 20, left: 10 };
-    const map_width = width - margin.left - margin.right;
-    const map_height = height - margin.top - margin.bottom;
+    const accessToken = 'pk.eyJ1IjoibmpsNTUiLCJhIjoiY203eHF2cTZzMDF6NDJycHk2NHRsMTBlOCJ9.YsiJ8vNV_ct2Ml_f1hAFLg';
+
+    const map = L.map('map', {
+      center: [42.3601, -71.0589],
+      zoom: 13,
+      maxBounds: [
+        [42.2800, -71.2000], // Southwest coordinates
+        [42.4500, -70.9500]  // Northeast coordinates, increased north bound
+      ],
+      maxZoom: 18,
+      minZoom: 13
+    });
+
+    L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/{z}/{x}/{y}?access_token={accessToken}', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://www.mapbox.com/">Mapbox</a>',
+      tileSize: 512,
+      zoomOffset: -1,
+      accessToken: accessToken
+    }).addTo(map);
+
+    // CHOROPLETH
+    // const map_fill = "#69b3a2"
+    // const map_select = "#ffcc00"
+    // const map_stroke = "white"
+
+    // const map_svg = d3.select("#choropleth");
+    // const width = map_svg.attr("width");
+    // const height = map_svg.attr("height");
+    // const margin = { top: 20, right: 10, bottom: 20, left: 10 };
+    // const map_width = width - margin.left - margin.right;
+    // const map_height = height - margin.top - margin.bottom;
 
     const load_map = async function () {
-      const bostonMap = await d3.json("data/boston.geojson");
-      const projection = d3.geoMercator().fitSize([map_width, map_height], bostonMap);
-      const path = d3.geoPath().projection(projection);
+      // const bostonMap = await d3.json("data/boston.geojson");
+      const yelpData = await d3.csv("data/yelp_boston.csv");
+      console.log(yelpData);
 
+      // CHOROPLETH
+      // const projection = d3.geoMercator().fitSize([width, height], bostonMap);
+      // const path = d3.geoPath().projection(projection);
 
-      console.log(bostonMap.features);
+      // const g = map_svg.append("g");
 
-      map_svg.append("g")
-        .selectAll("path")
-        .data(bostonMap.features)
-        .enter().append("path")
-        .attr("d", d => path(d))
-        .attr("fill", map_fill)
-        .on("mouseover", function (event, d) {
-          d3.select(this).attr("fill", map_select);
-        })
-        .on("mouseout", function (event, d) {
-          d3.select(this).attr("fill", map_fill);
-        });
+      // g.selectAll("path")
+      //   .data(bostonMap.features)
+      //   .enter().append("path")
+      //   .attr("d", d => path(d))
+      //   .attr("fill", map_fill)
+      //   .attr("stroke", map_stroke)
+      //   .attr("stroke-width", 1)
+      //   .on("mouseover", function (event, d) {
+      //     d3.select(this).attr("fill", map_select);
+      //   })
+      //   .on("mouseout", function (event, d) {
+      //     d3.select(this).attr("fill", map_fill);
+      //   });
 
-      d3.select("#lis")
-        .selectAll("li")
-        .data(bostonMap.features)
-        .enter()
-        .append("li")
-        .text(d => d.properties.name);
+      // g.selectAll("circle")
+      //   .data(yelpData)
+      //   .enter().append("circle")
+      //   .attr("cx", d => projection([d.longitude, d.latitude])[0])
+      //   .attr("cy", d => projection([d.longitude, d.latitude])[1])
+      //   .attr("r", 2)
+      //   .attr("fill", "red")
+      //   .attr("stroke", "black")
+      //   .attr("stroke-width", 0.5)
+      //   .on("mouseover", function (event, d) {
+      //     d3.select(this).attr("fill", "yellow");
+      //   })
+      //   .on("mouseout", function (event, d) {
+      //     d3.select(this).attr("fill", "red");
+      //   });
+
+      // Plot the Yelp data on the Leaflet map
+      yelpData.forEach(d => {
+        L.circleMarker([+d.latitude, +d.longitude], {
+          radius: 3,
+          fillColor: "red",
+          color: "black",
+          weight: 0.5,
+          opacity: .7,
+          fillOpacity: 1
+        }).addTo(map)
+          .on("mouseover", function (event) {
+            this.setStyle({
+              fillColor: "yellow"
+            });
+          })
+          .on("mouseout", function (event) {
+            this.setStyle({
+              fillColor: "red",
+              opacity: .7
+            });
+          });
+      });
     };
 
     load_map();
