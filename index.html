@@ -1,1 +1,106 @@
-<!-- placeholder -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>Homework 7</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="https://d3js.org/topojson.v3.min.js"></script>
+  <style>
+    .outline {
+      stroke-width: 1px;
+      fill: none;
+      stroke: white;
+    }
+
+    .state {
+      fill: lightgrey;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Homework 7</h1>
+  <h2>Jolly Zheng (jz767)</h2>
+
+  <svg id="choropleth" width="990" height="770" style="margin:20px"></svg>
+  <ul id="lis"></ul>
+
+  <script>
+    const svg = d3.select("#choropleth");
+
+    const width = svg.attr("width");
+    const height = svg.attr("height");
+
+    const margin = { top: 20, right: 20, bottom: 20, left: 20 };
+    const map_height = height - margin.top - margin.bottom;
+    const map_width = width - margin.left - margin.right;
+
+    const map = svg.append("g")
+      .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+    const gData = async function () {
+      const boston_map = await d3.json("data/boston.geojson");
+      //console.log("Loaded dataset:", nyrent);
+
+      var state = topojson.feature(nyrent, boston_map.objects.state);
+      var zips = topojson.feature(nyrent, boston_map.objects.zip_codes);
+      var zipsMesh = topojson.mesh(nyrent, boston_map.objects.zip_codes);
+      //console.log("State:", state);
+      //console.log("ZIPs:", zips);
+      //console.log("ZIPs Mesh:", zipsMesh);
+
+      var projection = d3.geoMercator().fitSize([map_width, map_height], state);
+      var pathies = d3.geoPath().projection(projection);
+      /*
+
+      const monthly_rent = zips.features.map(d => d.properties.median_monthly_rent);
+      //console.log("Monthly rents:", monthly_rent);
+
+      const sequential_color = ["#01DBFF", "#25C8EA", "#49B4D6", "#6DA1C1", "#918DAC"];
+      const colorScale = d3.scaleQuantile()
+        .domain(monthly_rent)
+        .range(sequential_color);
+      
+      //console.log("Color Scale Domain:", colorScale.domain());
+      //console.log("Color Scale Range:", colorScale.range());
+
+      let elems = map.append("g");
+
+      elems.selectAll("path.state").data(state.features)
+        .join("path")
+        .attr("class", "state")
+        .attr("d", pathies);
+
+      elems.selectAll("path.zip")
+        .data(zips.features)
+        .join("path")
+        .attr("class", "zip")
+        .attr("d", pathies)
+        .attr("fill", d => colorScale(d.properties.median_monthly_rent));
+
+      elems.append("path")
+        .datum(zipsMesh)
+        .attr("class", "outline")
+        .attr("d", pathies);
+
+      const [cx, cy] = projection([-76.4850, 42.4476]);
+      map.append("circle")
+        .attr("cx", cx)
+        .attr("cy", cy)
+        .attr("r", 5)
+        .style("fill", "black");
+
+      const thresholds = colorScale.quantiles();
+      //console.log("Quantile Thresholds:", thresholds);
+
+      const small = d3.select("#lis");
+      thresholds.forEach(threshold => {
+        small.append("li").text(d3.format("$,.0f")(threshold));
+      });
+      */
+    }
+    gData();
+  </script>
+</body>
+
+</html>
