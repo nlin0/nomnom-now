@@ -223,6 +223,15 @@
       cursor: grab;
       z-index: 10000; 
     }*/
+    #draggable {
+
+      position: absolute; 
+      cursor: grab; 
+      width: 50px; 
+      height: 50px; 
+      z-index: 1000;
+
+    }
 
     
   </style>
@@ -232,15 +241,16 @@
   <!-- <svg id="choropleth" width="690" height="470" style="margin:20px"></svg> -->
 
   <div id="background-container"></div>
+  <img id="draggable" src="data/imgs/people.png" alt="Draggable"/>
+
   <div class="section">
     <div class="descr-box" id="description">
       <div class="nom-nom">
         <h2>nom nom now</h2>
       </div>
-      <p id="details">Click on a point to see the details. Click on filters below to narrow results.
+      <p id="details"> Click on a point to see the details. Click on filters below to narrow results.
         Drag the (yellow circle on the top left) into the map to set a location.
       </p>
-      <img id="draggable" src="data/imgs/people.png" alt="Draggable" style="position: absolute; cursor: grab; width: 50px; height: 50px; z-index: 1000;" />
       <div id="scatterplot-container">
         <svg id="scatterplot"></svg>
       </div>
@@ -251,7 +261,6 @@
 
   <!-- TODO: PLACE LEGEND SVG HERE! -->
 
-  <div id="draggable" draggable="true"></div>
 
   <div class="button-list">
     <div class="filter-buttons" id="filter-buttons"></div>
@@ -585,8 +594,8 @@ document.addEventListener("mouseup", function (event) {
         .openPopup();
 
       // Reset draggable marker's position (optional)
-      draggable.style.left = "20px";  // Starting position (optional)
-      draggable.style.top = "100px";  // Starting position (optional)
+      draggable.style.left = "300px";  // Starting position (optional)
+      draggable.style.top = "5px";  // Starting position (optional)
 
       user_actions([latlng.lat, latlng.lng]);
     }
