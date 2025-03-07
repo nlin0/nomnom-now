@@ -9,6 +9,26 @@
   <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
 
   <style>
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+      /* Prevent horizontal scrolling */
+      width: 100%;
+    }
+
+    #background-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100px;
+      background-color: #A0B9BF;
+      z-index: -1;
+      /* Ensure it is behind all other elements */
+    }
+
     #map {
       margin: 0px;
       /*  vh = 98% of viewport */
@@ -24,6 +44,28 @@
       padding: 20px;
       box-sizing: border-box;
       overflow-y: auto;
+    }
+
+    .nom-nom {
+      font-size: 28px;
+      text-transform: uppercase;
+      margin-top: -38px;
+      text-align: center;
+      color: white;
+      padding: 20px;
+      margin-bottom: 30px;
+      transform: scaleY(3);
+      /* Stretch the text vertically */
+    }
+
+    .section {
+      margin: 0;
+      margin-right: -6%;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      gap: 5%;
+      height: 100vh;
     }
 
     .tooltip {
@@ -45,9 +87,11 @@
 
     .chat-bubble {
       /* background: #42a5f5; */
+      margin-top: 0px;
+
       background: #A0B9BF;
       color: #fff;
-      border-radius: 20px 20px 20px 2px;
+      border-radius: 20px 20px 2px 20px;
       display: block;
       width: 99%;
       padding: 7px 13px;
@@ -55,9 +99,56 @@
     }
 
     .card-body {
+      margin-top: 0px;
       flex: 1 1 auto;
       padding: 5px 5px;
     }
+
+    .tags-header {
+      font-size: 16px;
+      margin: 5px;
+      margin-top: 30px;
+
+    }
+
+    .tags {
+      font-size: 12px;
+      display: flex;
+      flex-direction: row;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .tag {
+      display: flex;
+      background-color: rgb(133, 166, 179);
+      font-size: 16px;
+      color: rgb(255, 255, 255);
+
+      padding: 3px;
+      padding-left: 10px;
+      padding-right: 10px;
+      justify-content: center;
+      align-items: center;
+      width: 80px;
+      height: 30px;
+
+      font-size: 12px;
+      text-align: center;
+      /* border-radius: 30px; */
+    }
+
+    .tag-p {
+      margin: 0px;
+      padding: 0px;
+    }
+
+    .restaurant {
+      text-transform: uppercase;
+      text-align: center;
+    }
+
+
 
     /* #choropleth {
       position: absolute;
@@ -70,12 +161,18 @@
 
 <body>
   <!-- <svg id="choropleth" width="690" height="470" style="margin:20px"></svg> -->
-  <div id="description">
-    <h2>Location Details</h2>
-    <p id="details">Click on a point to see the details.</p>
+
+  <div id="background-container"></div>
+  <div class="section">
+    <div class="descr-box" id="description">
+      <div class="nom-nom">
+        <h2>nom nom now</h2>
+      </div>
+      <p id="details">Click on a point to see the details.</p>
+    </div>
+    <div id="map"></div>
+    <div id="tooltip" class="tooltip"></div>
   </div>
-  <div id="map"></div>
-  <div id="tooltip" class="tooltip"></div>
 
   <script>
 
@@ -189,9 +286,13 @@
           })
           .on("click", function () {
             const address = parseAddress(d.location_json);
+            const categories = JSON.parse(d.categories_json).map(category => `<div class="tag"><p class="tag-p">${category[0]}</p></div>`).join('');
             document.getElementById('details').innerHTML = `
               <div class="descr-box">
-                <h3>${d.name}</h3>
+                <h3 class="restaurant">${d.name}</h3>
+                <div class="tags">
+                  ${categories}
+                </div>
                 <p>${d.rating} <img class="descr-star" src="data/imgs/star.png" alt="⭐" width="16" height="16">
                   based on ${d.review_count} reviews</p>
                 <p>Address: ${address}</p>
@@ -200,14 +301,14 @@
                   <p>${d.snippet_text}</p>
                 </div>
                 </div>
-                <div class="tags">
-                  <p>Tags: ${d.categories_json}</p>
-                </div>
               </div>
              `;
           });
       });
     };
+
+    ///// KEEPING THIS HERE JUST IN CASE WE WANNA USE
+    // <p class="tags-header">Tags:</p> //
 
     //////////// THE FUNCTION PLAYGROUND
     // bruteforce leaflet animation
