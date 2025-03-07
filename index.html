@@ -86,6 +86,7 @@
     .descr-box {
       background-color: #accbd24f;
       padding: 30px;
+      margin: 0px;
 
     }
 
@@ -209,18 +210,6 @@
       height: 100%;
     }
 
-    /* TEMP TEMP TEMP TEMP CHANGE CHANGE  */
-    /*#draggable {
-      width: 50px;
-      height: 50px;
-      background-color: #EDD9A3;
-      border-radius: 50%;
-      position: absolute;
-      top: 20px;
-      left: 20px;
-      cursor: grab;
-      z-index: 10000; 
-    }*/
     #draggable {
       padding: 0px;
       margin: 0px;
@@ -255,7 +244,6 @@
       cursor: pointer;
     }
 
-
     .scatter-descr {
       display: none;
       opacity: 0;
@@ -268,9 +256,16 @@
       font-size: 12px;
       width: 250px;
       top: 30px;
-      /* Position it below the question mark */
+
       left: 0;
       z-index: 1000;
+    }
+
+    #details {
+      background-color: #ffffff7b;
+      margin-top: 30px;
+      margin-bottom: 30px;
+      padding: 30px;
     }
 
 
@@ -293,6 +288,16 @@
     <img id="draggable" src="data/imgs/people.png" alt="pointer">
   </div>
 
+  <div class="scatter-descr">
+    <p>The ratings have been normalized such that points with less review counts
+      have less weight than those with higher review counts. So a 5-star rating with 10 reviews
+      would have a lower score than a 5-star rating with 600 reviews.
+    </p>
+    <p>The x-axis is the distance calculated from where the character icon is standing on the map.
+      Drag/brush across the the scatter plot to highlight those places.
+    </p>
+  </div>
+
   <div class="section">
     <div class="descr-box" id="description">
       <div class="nom-nom">
@@ -303,23 +308,12 @@
       </p>
       <div id="scatterplot-container">
         <svg id="scatterplot"></svg>
-
-        <img id="question" src="data/imgs/question.png" alt="pointer">
-
-        <div class="scatter-descr">
-          <p>The ratings have been normalized such that points with less review counts
-            have less weight than those with higher review counts. So a 5-star rating with 10 reviews
-            would have a lower score than a 5-star rating with 600 reviews.
-          </p>
-          <p>The x-axis is the distance calculated from where the character icon is standing on the map.
-            Drag/brush across the the scatter plot to highlight those places.
-          </p>
-        </div>
-
       </div>
     </div>
     <div id="map"></div>
     <div id="tooltip" class="tooltip"></div>
+
+    <img id="question" src="data/imgs/question.png" alt="pointer">
   </div>
 
   <!-- TODO: PLACE LEGEND SVG HERE! -->
@@ -328,10 +322,6 @@
   <div class="button-list">
     <div class="filter-buttons" id="filter-buttons"></div>
   </div>
-
-  <!-- <div class="scatterplot-container">
-    <svg id="scatterplot"></svg>
-    </div> -->
 
   <script>
     ////// HOVER BUTTON FUCNTIONALITY
