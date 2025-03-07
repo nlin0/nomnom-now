@@ -212,7 +212,7 @@
     }
 
     /* TEMP TEMP TEMP TEMP CHANGE CHANGE  */
-    #draggable {
+    /*#draggable {
       width: 50px;
       height: 50px;
       background-color: #EDD9A3;
@@ -222,7 +222,9 @@
       left: 20px;
       cursor: grab;
       z-index: 10000; 
-    }
+    }*/
+
+    
   </style>
 </head>
 
@@ -238,6 +240,7 @@
       <p id="details">Click on a point to see the details. Click on filters below to narrow results.
         Drag the (yellow circle on the top left) into the map to set a location.
       </p>
+      <img id="draggable" src="data/imgs/people.png" alt="Draggable" style="position: absolute; cursor: grab; width: 50px; height: 50px; z-index: 1000;" />
       <div id="scatterplot-container">
         <svg id="scatterplot"></svg>
       </div>
@@ -520,60 +523,74 @@
 
     // DRAGGABLE YAYAYAY!!
     let isDragging = false;
-    let draggable = document.getElementById("draggable");
-    let droppedMarker = null; // Store the last marker
+let draggable = document.getElementById("draggable");
+let droppedMarker = null; // Store the last marker
 
-    draggable.addEventListener("dragstart", (event) => {
-      event.preventDefault();
-    });
+// Prevent default drag behavior
+draggable.addEventListener("dragstart", (event) => {
+  event.preventDefault();
+});
 
-    draggable.addEventListener("mousedown", function (event) {
-      isDragging = true;
-      draggable.style.cursor = "grabbing";
-    });
-    document.addEventListener("mousemove", function (event) {
-      if (isDragging) {
-        draggable.style.left = event.pageX - 25 + "px";
-        draggable.style.top = event.pageY - 25 + "px";
+// When mouse button is pressed down, start dragging
+draggable.addEventListener("mousedown", function (event) {
+  isDragging = true;
+  draggable.style.cursor = "grabbing";
+});
+
+// Update position of the draggable element while dragging
+document.addEventListener("mousemove", function (event) {
+  if (isDragging) {
+    draggable.style.left = event.pageX - 25 + "px";  // Adjust so the center of the icon follows the mouse
+    draggable.style.top = event.pageY - 25 + "px";   // Adjust so the center of the icon follows the mouse
+  }
+});
+
+// Handle drop event
+document.addEventListener("mouseup", function (event) {
+  if (isDragging) {
+    isDragging = false;
+    draggable.style.cursor = "grab";
+
+    const mapContainer = document.getElementById("map");
+    const rect = mapContainer.getBoundingClientRect();
+
+    if (
+      event.clientX > rect.left &&
+      event.clientX < rect.right &&
+      event.clientY > rect.top &&
+      event.clientY < rect.bottom
+    ) {
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+      const latlng = map.containerPointToLatLng([x, y]);
+
+      // DEBUGGING: Log the lat/lng of the drop location
+      console.log("Dropped at:", latlng);
+
+      // Reset marker if it already exists
+      if (droppedMarker) {
+        map.removeLayer(droppedMarker);
       }
-    });
 
-    // conversion
-    document.addEventListener("mouseup", function (event) {
-      if (isDragging) {
-        isDragging = false;
-        draggable.style.cursor = "grab";
+      // Create a custom marker with the PNG image, anchor at the bottom center (feet)
+      droppedMarker = L.marker([latlng.lat, latlng.lng], {
+        icon: L.icon({
+          iconUrl: 'data/imgs/people.png',  // Use your image URL here
+          iconSize: [50, 50], // Size of the image (adjust to your PNG size)
+          iconAnchor: [25, 50],  // Position the anchor at the bottom-middle of the image
+          popupAnchor: [0, -50]  // Popup will appear above the feet of the image
+        })
+      }).addTo(map)
+        .bindPopup(`Dropped here:<br>Lat: ${latlng.lat.toFixed(5)}<br>Lng: ${latlng.lng.toFixed(5)}`)
+        .openPopup();
 
-        const mapContainer = document.getElementById("map");
-        const rect = mapContainer.getBoundingClientRect();
+      // Reset draggable marker's position (optional)
+      draggable.style.left = "20px";  // Starting position (optional)
+      draggable.style.top = "100px";  // Starting position (optional)
+    }
+  }
+});
 
-        if (
-          event.clientX > rect.left &&
-          event.clientX < rect.right &&
-          event.clientY > rect.top &&
-          event.clientY < rect.bottom
-        ) {
-          const x = event.clientX - rect.left;
-          const y = event.clientY - rect.top;
-          const latlng = map.containerPointToLatLng([x, y]);
-
-          // DEBUGGING
-          // console.log("Dropped at:", latlng);
-
-          // reset marker
-          if (droppedMarker) {
-            map.removeLayer(droppedMarker);
-          }
-          droppedMarker = L.marker([latlng.lat, latlng.lng]).addTo(map)
-            .bindPopup(`Dropped here:<br>Lat: ${latlng.lat.toFixed(5)}<br>Lng: ${latlng.lng.toFixed(5)}`)
-            .openPopup();
-
-          // reset TODO: CHANGE DEFAULT
-          draggable.style.left = "20px";
-          draggable.style.top = "100px";
-        }
-      }
-    });
 
     // LE SCATTERPLOT
     function createScatterPlot(data) {
