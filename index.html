@@ -30,7 +30,7 @@
     #map {
       margin: 0px;
       /*  vh = 98% of viewport */
-      height: 98vh;
+      height: 94.8vh;
       width: 55%;
       float: right;
     }
@@ -63,7 +63,7 @@
       display: flex;
       justify-content: center;
       gap: 5%;
-      height: 100vh;
+      height: 94.8vh;
     }
 
     .tooltip {
@@ -319,6 +319,7 @@
     const fillColor = "#A5CCD1"; // put here for easy cusomization.. for leaflet point fills
     const mapMarkers = [];
     let selectedMarker = null;
+    let previousSelectedMarker = null;
 
     const load_map = async function () {
       const yelpData = await d3.csv("data/yelp_boston.csv");
