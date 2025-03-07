@@ -316,9 +316,11 @@
       accessToken: accessToken
     }).addTo(map);
 
+    const fillColor = "#A5CCD1"; // put here for easy cusomization.. for leaflet point fills
     const mapMarkers = [];
+    let selectedMarker = null;
+
     const load_map = async function () {
-      const fillColor = "#A5CCD1";
       const yelpData = await d3.csv("data/yelp_boston.csv");
 
       generateFilterButtons(yelpData);
@@ -368,6 +370,7 @@
               animateRadius(marker, 5);
             });
 
+            // Highlight the clicked marker
             this.setStyle({
               fillColor: "yellow",
               fillOpacity: 1
@@ -375,24 +378,28 @@
             this.options.selected = true;
             animateRadius(this, 8);
 
+            // Update the selected marker reference
+            selectedMarker = this;
+
             const address = parseAddress(d.location_json);
             const categories = JSON.parse(d.categories_json).map(category => `<div class="tag"><p class="tag-p">${category[0]}</p></div>`).join('');
-            document.getElementById('details').innerHTML = `
-        <div class="descr-box">
-        <h3 class="restaurant">${d.name}</h3>
-        <p>${d.rating} <img class="descr-star" src="data/imgs/star.png" alt="⭐" width="16" height="16">
-        based on ${d.review_count} reviews</p>
-        <p>Address: ${address}</p>
-         <div class="tags">
-        ${categories}
-        </div>
-        <div class="card-body">
-        <div class="chat-bubble">
-        <p>${d.snippet_text}</p>
-        </div>
-        </div>
-        </div>
-       `;
+            document.getElementById('details').innerHTML =
+              `
+                <div class="descr-box">
+                <h3 class="restaurant">${d.name}</h3>
+                <p>${d.rating} <img class="descr-star" src="data/imgs/star.png" alt="⭐" width="16" height="16">
+                based on ${d.review_count} reviews</p>
+                <p>Address: ${address}</p>
+                <div class="tags">
+                ${categories}
+                </div>
+                <div class="card-body">
+                <div class="chat-bubble">
+                <p>${d.snippet_text}</p>
+                </div>
+                </div>
+                </div>
+              `;
             // selected_pnt(d.name);
           });
         mapMarkers.push({
@@ -727,16 +734,19 @@
           marker.setStyle({ fillColor: "#ffc9c9", fillOpacity: 1 });
           marker._path.style.transition = "fill 0.6s ease";
         } else {
-          marker.setStyle({ fillColor: "#A5CCD1", fillOpacity: 0.7 });
+          marker.setStyle({ fillColor: fillColor, fillOpacity: 0.7 });
           marker._path.style.transition = "fill 0.s ease";
         }
       });
     }
 
     function resetMapMarkers() {
-      mapMarkers.forEach(({ marker }) => {
-        marker.setStyle({ fillColor: "#A5CCD1", fillOpacity: 0.7 });
-        marker._path.style.transition = "fill 1s ease";
+      mapMarkers.forEach(({ marker, originalData }) => {
+        if (selectedMarker && marker === selectedMarker) {
+          marker.setStyle({ fillColor: "yellow", fillOpacity: 1 });
+        } else {
+          marker.setStyle({ fillColor: fillColor, fillOpacity: 0.7 });
+        }
       });
     }
 
