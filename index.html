@@ -210,6 +210,18 @@
       padding: 0px;
       height: 100%;
     }
+
+    /* TEMP TEMP TEMP TEMP CHANGE CHANGE  */
+    #draggable {
+      width: 50px;
+      height: 50px;
+      background-color: red;
+      border-radius: 50%;
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      cursor: grab;
+    }
   </style>
 </head>
 
@@ -222,7 +234,9 @@
       <div class="nom-nom">
         <h2>nom nom now</h2>
       </div>
-      <p id="details">Click on a point to see the details. Click on filters below to narrow results.</p>
+      <p id="details">Click on a point to see the details. Click on filters below to narrow results.
+        Drag the (red dot) onto the map to set a location.
+      </p>
       <div id="scatterplot-container">
         <svg id="scatterplot"></svg>
       </div>
@@ -230,6 +244,8 @@
     <div id="map"></div>
     <div id="tooltip" class="tooltip"></div>
   </div>
+
+  <div id="draggable" draggable="true"></div>
 
   <div class="button-list">
     <div class="filter-buttons" id="filter-buttons"></div>
@@ -499,14 +515,70 @@
 
     load_map();
 
+    // DRAGGABLE YAYAYAY!!
+    let isDragging = false;
+    let draggable = document.getElementById("draggable");
+    let droppedMarker = null; // Store the last marker
 
-    // SCATTER
+    draggable.addEventListener("dragstart", (event) => {
+      event.preventDefault();
+    });
+
+    draggable.addEventListener("mousedown", function (event) {
+      isDragging = true;
+      draggable.style.cursor = "grabbing";
+    });
+    document.addEventListener("mousemove", function (event) {
+      if (isDragging) {
+        draggable.style.left = event.pageX - 25 + "px";
+        draggable.style.top = event.pageY - 25 + "px";
+      }
+    });
+
+    // conversion
+    document.addEventListener("mouseup", function (event) {
+      if (isDragging) {
+        isDragging = false;
+        draggable.style.cursor = "grab";
+
+        const mapContainer = document.getElementById("map");
+        const rect = mapContainer.getBoundingClientRect();
+
+        if (
+          event.clientX > rect.left &&
+          event.clientX < rect.right &&
+          event.clientY > rect.top &&
+          event.clientY < rect.bottom
+        ) {
+          const x = event.clientX - rect.left;
+          const y = event.clientY - rect.top;
+          const latlng = map.containerPointToLatLng([x, y]);
+
+          // DEBUGGING
+          // console.log("Dropped at:", latlng);
+
+          // reset marker
+          if (droppedMarker) {
+            map.removeLayer(droppedMarker);
+          }
+          droppedMarker = L.marker([latlng.lat, latlng.lng]).addTo(map)
+            .bindPopup(`Dropped here:<br>Lat: ${latlng.lat.toFixed(5)}<br>Lng: ${latlng.lng.toFixed(5)}`)
+            .openPopup();
+
+          // reset TODO: CHANGE DEFAULT
+          draggable.style.left = "20px";
+          draggable.style.top = "100px";
+        }
+      }
+    });
+
+    // LE SCATTERPLOT
     function createScatterPlot(data) {
       const container = document.getElementById("scatterplot-container");
-      const width = container.clientWidth - 40; // Adjust for padding
+      const width = container.clientWidth - 40; 
       const height = container.clientHeight - 30;
 
-      d3.select("#scatterplot").selectAll("*").remove(); // Clear previous plot
+      d3.select("#scatterplot").selectAll("*").remove();
 
       const svg = d3.select("#scatterplot")
         .attr("width", width)
@@ -559,7 +631,6 @@
             return isSelected ? "red" : colorScale(d.rating);
           });
 
-          // Clear selection on second click
           svg.on("click", () => {
             points.attr("fill", d => colorScale(d.rating));
             svg.select(".brush").call(brush.move, null); // le reset
