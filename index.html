@@ -393,6 +393,7 @@
         </div>
         </div>
        `;
+            // selected_pnt(d.name);
           });
         mapMarkers.push({
           marker,
@@ -622,6 +623,8 @@
           draggable.style.left = "42%";
           draggable.style.top = "7%";
 
+          resetMapMarkers();
+
           user_actions([latlng.lat, latlng.lng]);
         } else {
           if (speechBubble) {
@@ -633,7 +636,6 @@
 
     draggable.style.width = "60px";
     draggable.style.height = "65px";
-
 
     // LE SCATTERPLOT
     function createScatterPlot(data) {
@@ -675,21 +677,21 @@
         .attr("cy", d => y(d.ourScore))
         .attr("r", 3)
         .attr("fill", d => colorScale(d.rating))
-        .attr("opacity", 0.6);
+        .attr("opacity", 0.6)
+        .attr("name", d => d.name);
 
       // BRUSH function
       const brush = d3.brush()
         .extent([[0, 0], [width - 60, height - 30]])
         .on("end", function (event) {
+
           if (!event.selection) {
-            points.attr("fill", d => colorScale(d.rating)); // Reset colors
+            points.attr("fill", d => colorScale(d.rating));
             resetMapMarkers();
             return;
           }
 
           const [[x0, y0], [x1, y1]] = event.selection;
-
-          // Track selected points
           const selectedPoints = new Set();
 
           points.attr("fill", function (d) {
@@ -700,12 +702,12 @@
               selectedPoints.add(d.name);
             }
 
-            return isSelected ? "red" : colorScale(d.rating);
+            return isSelected ? "#A62639" : colorScale(d.rating);
           });
 
           updateMapMarkers(selectedPoints);
 
-          // Clicking anywhere resets the selection
+          // Clicking anywhere resets everything
           svg.on("click", () => {
             points.attr("fill", d => colorScale(d.rating));
             resetMapMarkers();
@@ -722,9 +724,11 @@
     function updateMapMarkers(selectedPoints) {
       mapMarkers.forEach(({ marker, originalData }) => {
         if (originalData && selectedPoints.has(originalData.name)) {
-          marker.setStyle({ fillColor: "red", fillOpacity: 1 });
+          marker.setStyle({ fillColor: "#ffc9c9", fillOpacity: 1 });
+          marker._path.style.transition = "fill 0.6s ease";
         } else {
           marker.setStyle({ fillColor: "#A5CCD1", fillOpacity: 0.7 });
+          marker._path.style.transition = "fill 0.s ease";
         }
       });
     }
@@ -732,9 +736,9 @@
     function resetMapMarkers() {
       mapMarkers.forEach(({ marker }) => {
         marker.setStyle({ fillColor: "#A5CCD1", fillOpacity: 0.7 });
+        marker._path.style.transition = "fill 1s ease";
       });
     }
-
 
     async function user_actions(click_info) {
       try {
@@ -756,6 +760,18 @@
       const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
       return R * c * 0.6214;
     }
+
+    // function selected_pnt(name) {
+    //   d3.selectAll(".scatter-point")
+    //     .transition()
+    //     .duration(300)
+    //     .attr("fill", function (d) {
+    //       return d.name === name ? "black" : colorScale(d.rating);
+    //     })
+    //     .attr("r", function (d) {
+    //       return d.name === name ? 6 : 3;
+    //     });
+    // }
 
     function loadAndCalculateDistances(lat, lon) {
       return new Promise((resolve, reject) => {
