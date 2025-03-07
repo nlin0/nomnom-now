@@ -248,6 +248,32 @@
       margin-left: 40px;
     }
 
+    #question {
+      width: 25px;
+      height: 25px;
+      margin: 0px;
+      cursor: pointer;
+    }
+
+
+    .scatter-descr {
+      display: none;
+      opacity: 0;
+      transition: opacity 0.2s ease-in-out;
+      position: absolute;
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 10px;
+      border-radius: 5px;
+      font-size: 12px;
+      width: 250px;
+      top: 30px;
+      /* Position it below the question mark */
+      left: 0;
+      z-index: 1000;
+    }
+
+
     @media (max-width: 1150px) {
       .nom-nom {
         font-size: 16px;
@@ -277,6 +303,19 @@
       </p>
       <div id="scatterplot-container">
         <svg id="scatterplot"></svg>
+
+        <img id="question" src="data/imgs/question.png" alt="pointer">
+
+        <div class="scatter-descr">
+          <p>The ratings have been normalized such that points with less review counts
+            have less weight than those with higher review counts. So a 5-star rating with 10 reviews
+            would have a lower score than a 5-star rating with 600 reviews.
+          </p>
+          <p>The x-axis is the distance calculated from where the character icon is standing on the map.
+            Drag/brush across the the scatter plot to highlight those places.
+          </p>
+        </div>
+
       </div>
     </div>
     <div id="map"></div>
@@ -295,6 +334,24 @@
     </div> -->
 
   <script>
+    ////// HOVER BUTTON FUCNTIONALITY
+    document.addEventListener("DOMContentLoaded", function () {
+      const questionIcon = document.getElementById("question");
+      const scatterDescr = document.querySelector(".scatter-descr");
+
+      questionIcon.addEventListener("mouseover", function () {
+        scatterDescr.style.display = "block";
+        scatterDescr.style.opacity = "1";
+      });
+
+      questionIcon.addEventListener("mouseout", function () {
+        scatterDescr.style.opacity = "0";
+        setTimeout(() => {
+          scatterDescr.style.display = "none";
+        }, 200);
+      });
+    });
+
     const accessToken = 'pk.eyJ1IjoibmpsNTUiLCJhIjoiY203eHF2cTZzMDF6NDJycHk2NHRsMTBlOCJ9.YsiJ8vNV_ct2Ml_f1hAFLg';
     const styleId = 'mapbox/light-v10'; // api style.. added here also for customization conv
 
@@ -319,7 +376,6 @@
     const fillColor = "#A5CCD1"; // put here for easy cusomization.. for leaflet point fills
     const mapMarkers = [];
     let selectedMarker = null;
-    let previousSelectedMarker = null;
 
     const load_map = async function () {
       const yelpData = await d3.csv("data/yelp_boston.csv");
@@ -371,7 +427,6 @@
               animateRadius(marker, 5);
             });
 
-            // Highlight the clicked marker
             this.setStyle({
               fillColor: "yellow",
               fillOpacity: 1
@@ -379,7 +434,6 @@
             this.options.selected = true;
             animateRadius(this, 8);
 
-            // Update the selected marker reference
             selectedMarker = this;
 
             const address = parseAddress(d.location_json);
@@ -411,28 +465,6 @@
       });
     };
 
-    function addAllButton() {
-      const filterButtonsContainer = document.getElementById('filter-buttons');
-      const button = document.createElement('button');
-      button.className = 'filter-button';
-      button.textContent = 'CLEAR';
-      button.onclick = () => {
-        selectedCategories.clear();
-        updateFilterButtons();
-        user_actions([42.3601, -71.0589]);
-      };
-      button.onmouseover = () => {
-        button.style.backgroundColor = '#EDD9A3';
-        button.style.color = 'black';
-      };
-      button.onmouseout = () => {
-        if (!selectedCategories.size) {
-          button.style.backgroundColor = 'rgb(133, 166, 179)';
-          button.style.color = 'white';
-        }
-      };
-      filterButtonsContainer.appendChild(button);
-    }
 
     // bruteforce leaflet animation
     function animateRadius(marker, newRadius) {
