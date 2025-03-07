@@ -14,7 +14,6 @@
       margin: 0;
       padding: 0;
       overflow-x: hidden;
-      /* Prevent horizontal scrolling */
       width: 100%;
     }
 
@@ -26,7 +25,6 @@
       height: 100px;
       background-color: #A0B9BF;
       z-index: -1;
-      /* Ensure it is behind all other elements */
     }
 
     #map {
@@ -55,7 +53,6 @@
       padding: 20px;
       margin-bottom: 30px;
       transform: scaleY(3);
-      /* Stretch the text vertically */
     }
 
     .section {
@@ -148,6 +145,11 @@
       text-align: center;
     }
 
+    .scatterplot-container {
+      width: 100%;
+      padding: 20px;
+      box-sizing: border-box;
+    }
 
 
     /* #choropleth {
@@ -174,6 +176,8 @@
     <div id="tooltip" class="tooltip"></div>
   </div>
 
+  <div class="scatterplot-container" id="scatterplot"></div>
+
   <script>
 
     const accessToken = 'pk.eyJ1IjoibmpsNTUiLCJhIjoiY203eHF2cTZzMDF6NDJycHk2NHRsMTBlOCJ9.YsiJ8vNV_ct2Ml_f1hAFLg';
@@ -198,60 +202,10 @@
       accessToken: accessToken
     }).addTo(map);
 
-    // CHOROPLETH
-    // const map_fill = "#69b3a2"
-    // const map_select = "#ffcc00"
-    // const map_stroke = "white"
-
-    // const map_svg = d3.select("#choropleth");
-    // const width = map_svg.attr("width");
-    // const height = map_svg.attr("height");
-    // const margin = { top: 20, right: 10, bottom: 20, left: 10 };
-    // const map_width = width - margin.left - margin.right;
-    // const map_height = height - margin.top - margin.bottom;
-
     const load_map = async function () {
       const fillColor = "#A5CCD1";
-      // const bostonMap = await d3.json("data/boston.geojson");
       const yelpData = await d3.csv("data/yelp_boston.csv");
-
-      // CHOROPLETH
-      // const projection = d3.geoMercator().fitSize([width, height], bostonMap);
-      // const path = d3.geoPath().projection(projection);
-
-      // const g = map_svg.append("g");
-
-      // g.selectAll("path")
-      //   .data(bostonMap.features)
-      //   .enter().append("path")
-      //   .attr("d", d => path(d))
-      //   .attr("fill", map_fill)
-      //   .attr("stroke", map_stroke)
-      //   .attr("stroke-width", 1)
-      //   .on("mouseover", function (event, d) {
-      //     d3.select(this).attr("fill", map_select);
-      //   })
-      //   .on("mouseout", function (event, d) {
-      //     d3.select(this).attr("fill", map_fill);
-      //   });
-
-      // g.selectAll("circle")
-      //   .data(yelpData)
-      //   .enter().append("circle")
-      //   .attr("cx", d => projection([d.longitude, d.latitude])[0])
-      //   .attr("cy", d => projection([d.longitude, d.latitude])[1])
-      //   .attr("r", 2)
-      //   .attr("fill", "red")
-      //   .attr("stroke", "black")
-      //   .attr("stroke-width", 0.5)
-      //   .on("mouseover", function (event, d) {
-      //     d3.select(this).attr("fill", "yellow");
-      //   })
-      //   .on("mouseout", function (event, d) {
-      //     d3.select(this).attr("fill", "red");
-      //   });
-
-      // Plot the Yelp data on the Leaflet map
+      
       yelpData.forEach(d => {
         const marker = L.circleMarker([+d.latitude, +d.longitude], {
           radius: 5,

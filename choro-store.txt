@@ -1,0 +1,54 @@
+THIS TXT FILE IS TO STORE BACKUP CHOROPLETH
+
+
+// CHOROPLETH
+// const map_fill = "#69b3a2"
+// const map_select = "#ffcc00"
+// const map_stroke = "white"
+
+// const map_svg = d3.select("#choropleth");
+// const width = map_svg.attr("width");
+// const height = map_svg.attr("height");
+// const margin = { top: 20, right: 10, bottom: 20, left: 10 };
+// const map_width = width - margin.left - margin.right;
+// const map_height = height - margin.top - margin.bottom;
+
+
+inside load_map function:
+
+// const bostonMap = await d3.json("data/boston.geojson");
+// CHOROPLETH
+// const projection = d3.geoMercator().fitSize([width, height], bostonMap);
+// const path = d3.geoPath().projection(projection);
+
+// const g = map_svg.append("g");
+
+// g.selectAll("path")
+//   .data(bostonMap.features)
+//   .enter().append("path")
+//   .attr("d", d => path(d))
+//   .attr("fill", map_fill)
+//   .attr("stroke", map_stroke)
+//   .attr("stroke-width", 1)
+//   .on("mouseover", function (event, d) {
+//     d3.select(this).attr("fill", map_select);
+//   })
+//   .on("mouseout", function (event, d) {
+//     d3.select(this).attr("fill", map_fill);
+//   });
+
+// g.selectAll("circle")
+//   .data(yelpData)
+//   .enter().append("circle")
+//   .attr("cx", d => projection([d.longitude, d.latitude])[0])
+//   .attr("cy", d => projection([d.longitude, d.latitude])[1])
+//   .attr("r", 2)
+//   .attr("fill", "red")
+//   .attr("stroke", "black")
+//   .attr("stroke-width", 0.5)
+//   .on("mouseover", function (event, d) {
+//     d3.select(this).attr("fill", "yellow");
+//   })
+//   .on("mouseout", function (event, d) {
+//     d3.select(this).attr("fill", "red");
+//   });
