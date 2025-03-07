@@ -9,12 +9,32 @@
   <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
 
   <style>
-    /* ADD CSS HERE LATER */
     #map {
       margin: 0px;
-      height: 900px;
+      /*  vh = 98% of viewport */
+      height: 98vh; 
       width: 55%;
       float: right;
+    }
+
+    #description {
+      width: 30%;
+      height: 100%;
+      float: left;
+      padding: 20px;
+      box-sizing: border-box;
+      overflow-y: auto;
+    }
+
+    .tooltip {
+      position: absolute;
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 8px;
+      border-radius: 5px;
+      font-size: 14px;
+      display: none;
+      z-index: 1000;
     }
 
     /* #choropleth {
@@ -28,26 +48,31 @@
 
 <body>
   <!-- <svg id="choropleth" width="690" height="470" style="margin:20px"></svg> -->
-  <div class="map-section">
-    <div id="map"></div>
+  <div id="description">
+    <h2>Location Details</h2>
+    <p id="details">Click on a point to see the details.</p>
   </div>
+  <div id="map"></div>
+  <div id="tooltip" class="tooltip"></div>
 
   <script>
 
     const accessToken = 'pk.eyJ1IjoibmpsNTUiLCJhIjoiY203eHF2cTZzMDF6NDJycHk2NHRsMTBlOCJ9.YsiJ8vNV_ct2Ml_f1hAFLg';
+    const styleId = 'mapbox/light-v10'; // api style.. added here also for customization conv
 
     const map = L.map('map', {
       center: [42.3601, -71.0589],
       zoom: 13,
       maxBounds: [
-        [42.2800, -71.2000], // Southwest coordinates
-        [42.4500, -70.9500]  // Northeast coordinates, increased north bound
+        [42.2800, -71.2000],
+        [42.4500, -70.9500]
       ],
       maxZoom: 18,
       minZoom: 13
     });
 
-    L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/{z}/{x}/{y}?access_token={accessToken}', {
+
+    L.tileLayer(`https://api.mapbox.com/styles/v1/${styleId}/tiles/{z}/{x}/{y}?access_token={accessToken}`, {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://www.mapbox.com/">Mapbox</a>',
       tileSize: 512,
       zoomOffset: -1,
@@ -67,9 +92,9 @@
     // const map_height = height - margin.top - margin.bottom;
 
     const load_map = async function () {
+      const fillColor = "#A5CCD1";
       // const bostonMap = await d3.json("data/boston.geojson");
       const yelpData = await d3.csv("data/yelp_boston.csv");
-      console.log(yelpData);
 
       // CHOROPLETH
       // const projection = d3.geoMercator().fitSize([width, height], bostonMap);
@@ -109,30 +134,106 @@
 
       // Plot the Yelp data on the Leaflet map
       yelpData.forEach(d => {
-        L.circleMarker([+d.latitude, +d.longitude], {
-          radius: 3,
-          fillColor: "red",
+        const marker = L.circleMarker([+d.latitude, +d.longitude], {
+          radius: 5,
+          fillColor: fillColor,
           color: "black",
           weight: 0.5,
-          opacity: .7,
-          fillOpacity: 1
+          opacity: 0.7,
+          fillOpacity: 0.7,
         }).addTo(map)
           .on("mouseover", function (event) {
             this.setStyle({
-              fillColor: "yellow"
+              fillColor: "yellow",
+              fillOpacity: 1
             });
+            this._path.style.transition = "fill 0.3s ease";
+            this._path.classList.add("marker-hover");
+            animateRadius(this, 8);
+            showTooltip(event.originalEvent, d.name, d.rating, d.categories_json);
           })
-          .on("mouseout", function (event) {
+          .on("mousemove", function (event) {
+            updateTooltipPosition(event.originalEvent);
+          })
+          .on("mouseout", function () {
             this.setStyle({
-              fillColor: "red",
-              opacity: .7
+              fillColor: fillColor,
+              fillOpacity: 0.7
             });
+            this._path.style.transition = "fill 0.3s ease";
+            this._path.classList.remove("marker-hover");
+            animateRadius(this, 5);
+            hideTooltip();
+          })
+          .on("click", function () {
+            const address = parseAddress(d.location_json);
+            document.getElementById('details').innerHTML = `
+              <h3>${d.name}</h3>
+              <p>Rating: ${d.rating}</p>
+              <p>Review Count: ${d.review_count}</p>
+              <p>Categories: ${d.categories_json}</p>
+              <p>Snippet: ${d.snippet_text}</p>
+              <p>Address: ${address}</p>`;
           });
       });
     };
 
-    load_map();
+    //////////// THE FUNCTION PLAYGROUND
+    // bruteforce leaflet animation
+    function animateRadius(marker, newRadius) {
+      const duration = 200; // in milisecs
+      const startRadius = marker.options.radius;
+      const startTime = performance.now();
 
+      function animate(time) {
+        const elapsed = time - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const currentRadius = startRadius + (newRadius - startRadius) * progress;
+        marker.setStyle({ radius: currentRadius });
+
+        if (progress < 1) {
+          requestAnimationFrame(animate);
+        }
+      }
+
+      requestAnimationFrame(animate);
+    }
+
+    // map tooltips
+    function showTooltip(event, name, rating, categories) {
+      const tooltip = document.getElementById("tooltip");
+      let firstCategory = "";
+      const parsedCategories = JSON.parse(categories);
+      if (Array.isArray(parsedCategories) && parsedCategories.length > 0) {
+        firstCategory = parsedCategories[0][0];
+      }
+      tooltip.innerHTML = `<strong>${name}</strong><br>⭐ ${rating} - ${firstCategory}`;
+      tooltip.style.display = "block";
+      updateTooltipPosition(event);
+    }
+
+    function updateTooltipPosition(event) {
+      const tooltip = document.getElementById("tooltip");
+      tooltip.style.left = event.pageX + 15 + "px";
+      tooltip.style.top = event.pageY - 10 + "px";
+    }
+
+    function hideTooltip() {
+      document.getElementById("tooltip").style.display = "none";
+    }
+
+    function parseAddress(locationJson) {
+      try {
+        const location = JSON.parse(locationJson);
+        const address = location.display_address.join(", ");
+        return address;
+      } catch (e) {
+        console.error("Error parsing address:", e);
+        return "Unknown address";
+      }
+    }
+
+    load_map();
 
   </script>
 </body>
