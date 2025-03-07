@@ -523,27 +523,27 @@
 
     // DRAGGABLE YAYAYAY!!
     let isDragging = false;
-let draggable = document.getElementById("draggable");
-let droppedMarker = null; // Store the last marker
+    let draggable = document.getElementById("draggable");
+    let droppedMarker = null; // Store the last marker
 
-// Prevent default drag behavior
-draggable.addEventListener("dragstart", (event) => {
-  event.preventDefault();
-});
+    // Prevent default drag behavior
+    draggable.addEventListener("dragstart", (event) => {
+      event.preventDefault();
+    });
 
-// When mouse button is pressed down, start dragging
-draggable.addEventListener("mousedown", function (event) {
-  isDragging = true;
-  draggable.style.cursor = "grabbing";
-});
+    // When mouse button is pressed down, start dragging
+    draggable.addEventListener("mousedown", function (event) {
+      isDragging = true;
+      draggable.style.cursor = "grabbing";
+    });
 
-// Update position of the draggable element while dragging
-document.addEventListener("mousemove", function (event) {
-  if (isDragging) {
-    draggable.style.left = event.pageX - 25 + "px";  // Adjust so the center of the icon follows the mouse
-    draggable.style.top = event.pageY - 25 + "px";   // Adjust so the center of the icon follows the mouse
-  }
-});
+    // Update position of the draggable element while dragging
+    document.addEventListener("mousemove", function (event) {
+      if (isDragging) {
+        draggable.style.left = event.pageX - 25 + "px";  // Adjust so the center of the icon follows the mouse
+        draggable.style.top = event.pageY - 25 + "px";   // Adjust so the center of the icon follows the mouse
+      }
+    });
 
 // Handle drop event
 document.addEventListener("mouseup", function (event) {
@@ -587,6 +587,8 @@ document.addEventListener("mouseup", function (event) {
       // Reset draggable marker's position (optional)
       draggable.style.left = "20px";  // Starting position (optional)
       draggable.style.top = "100px";  // Starting position (optional)
+
+      user_actions([latlng.lat, latlng.lng]);
     }
   }
 });
