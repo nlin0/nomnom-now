@@ -224,12 +224,28 @@
     #draggable {
       padding: 0px;
       margin: 0px;
+      margin-top: 30px;
+      /* margin-left: 40px; */
       position: absolute;
       cursor: grab;
       width: 50px;
       height: 50px;
       z-index: 1000;
+    }
 
+    .speech-bubble {
+      position: absolute;
+      background-color: #EDD9A3;
+      width: 80px;
+      text-align: center;
+      padding: 5px;
+      margin: 5px;
+      text-transform: lowercase;
+      font-size: 10px;
+    }
+
+    .drag-section {
+      margin-left: 40px;
     }
 
     @media (max-width: 1150px) {
@@ -246,15 +262,18 @@
   <!-- <svg id="choropleth" width="690" height="470" style="margin:20px"></svg> -->
 
   <div id="background-container"></div>
-  <img id="draggable" src="data/imgs/people.png" alt="pointer">
+  <div class="drag-section">
+    <div class="speech-bubble">Drop me on the map!</div>
+    <img id="draggable" src="data/imgs/people.png" alt="pointer">
+  </div>
 
   <div class="section">
     <div class="descr-box" id="description">
       <div class="nom-nom">
         <h2>nom nom now</h2>
       </div>
-      <p id="details"> Click on a point to see the details. Click on filters below to narrow results.
-        Drag the (yellow circle on the top left) into the map to set a location.
+      <p id="details"> Click on a point to see the details. Scroll down and click on filters below to narrow results.
+        Drag the person into the map to set a location.
       </p>
       <div id="scatterplot-container">
         <svg id="scatterplot"></svg>
@@ -546,13 +565,16 @@
     draggable.addEventListener("mousedown", function (event) {
       isDragging = true;
       draggable.style.cursor = "grabbing";
-      document.querySelector(".speech-bubble").style.display = "none"; // Hide speech bubble when dragging
+      const speechBubble = document.querySelector(".speech-bubble");
+      if (speechBubble) {
+        speechBubble.style.display = "none";
+      }
     });
 
     document.addEventListener("mousemove", function (event) {
       if (isDragging) {
         draggable.style.left = event.pageX - 30 + "px";
-        draggable.style.top = event.pageY - 65 + "px";   // feet follow mouse
+        draggable.style.top = event.pageY - 98 + "px";   // feet follow mouse
       }
     });
 
@@ -593,12 +615,14 @@
             .bindPopup(`Dropped here:<br>Lat: ${latlng.lat.toFixed(5)}<br>Lng: ${latlng.lng.toFixed(5)}`)
             .openPopup();
 
-          draggable.style.left = "31%";
-          draggable.style.top = "4%";
+          draggable.style.left = "32%";
+          draggable.style.top = "1%";
 
           user_actions([latlng.lat, latlng.lng]);
         } else {
-          document.querySelector(".speech-bubble").style.display = "block"; // Show speech bubble if not dropped on map
+          if (speechBubble) {
+            speechBubble.style.display = "block";
+          }
         }
       }
     });
@@ -652,7 +676,6 @@
       //   .style("text-anchor", "middle")
       //   .text("Our Score");
 
-
       const points = svg.selectAll("circle")
         .data(data)
         .enter().append("circle")
@@ -667,22 +690,44 @@
         .extent([[0, 0], [width - 60, height - 30]])
         .on("end", function (event) {
           if (!event.selection) {
-            points.attr("fill", d => colorScale(d.rating)); // le reset
+            // Reset all points and map markers if no selection
+            points.attr("fill", d => colorScale(d.rating));
+            mapMarkers.forEach(({ marker }) => {
+              marker.setStyle({ fillColor: "#A5CCD1", fillOpacity: 0.7 });
+            });
             return;
           }
+
           const [[x0, y0], [x1, y1]] = event.selection;
 
-          points.attr("fill", function (d) {
-            const isSelected = x(d.distance) >= x0 && x(d.distance) <= x1 &&
+          // Get selected points
+          const brushedPoints = data.filter(d => {
+            return x(d.distance) >= x0 && x(d.distance) <= x1 &&
               y(d.ourScore) >= y0 && y(d.ourScore) <= y1;
-            return isSelected ? "red" : colorScale(d.rating);
           });
 
+          // Change scatterplot colors
+          points.attr("fill", d => brushedPoints.includes(d) ? "red" : colorScale(d.rating));
+
+          // Update Leaflet map markers
+          mapMarkers.forEach(({ marker, data }) => {
+            if (data && brushedPoints.some(d => d.name === data.name)) {
+              marker.setStyle({ fillColor: "red", fillOpacity: 1 });
+            } else {
+              marker.setStyle({ fillColor: "#A5CCD1", fillOpacity: 0.7 });
+            }
+          });
+
+          // Reset on clicking outside
           svg.on("click", () => {
             points.attr("fill", d => colorScale(d.rating));
-            svg.select(".brush").call(brush.move, null); // le reset
+            mapMarkers.forEach(({ marker }) => {
+              marker.setStyle({ fillColor: "#A5CCD1", fillOpacity: 0.7 });
+            });
+            svg.select(".brush").call(brush.move, null);
           });
         });
+
       svg.append("g")
         .attr("class", "brush")
         .call(brush);
