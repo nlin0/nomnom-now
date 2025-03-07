@@ -47,7 +47,7 @@
     .nom-nom {
       font-size: 24px;
       text-transform: uppercase;
-      margin-top: -38px;
+      margin-top: -42px;
       text-align: center;
       color: white;
       padding: 20px;
@@ -81,6 +81,12 @@
       margin: 0px;
       padding: 0px;
       margin-bottom: -2px;
+    }
+
+    .descr-box {
+      background-color: #accbd24f;
+      padding: 30px;
+
     }
 
     .chat-bubble {
@@ -188,14 +194,6 @@
       margin-bottom: 10px;
     }
 
-    @media (max-width: 1150px) {
-      .nom-nom {
-        font-size: 16px;
-        margin-top: 0px;
-        margin-top: -14px;
-      }
-    }
-
     #scatterplot-container {
       width: 450px;
       height: 400px;
@@ -225,16 +223,22 @@
     }*/
     #draggable {
       padding: 0px;
-      margin:0px;
-      position: absolute; 
-      cursor: grab; 
-      width: 50px; 
-      height: 50px; 
+      margin: 0px;
+      position: absolute;
+      cursor: grab;
+      width: 50px;
+      height: 50px;
       z-index: 1000;
 
     }
 
-    
+    @media (max-width: 1150px) {
+      .nom-nom {
+        font-size: 16px;
+        margin-top: 0px;
+        margin-top: -13px;
+      }
+    }
   </style>
 </head>
 
@@ -357,12 +361,12 @@
             document.getElementById('details').innerHTML = `
         <div class="descr-box">
         <h3 class="restaurant">${d.name}</h3>
-        <div class="tags">
-        ${categories}
-        </div>
         <p>${d.rating} <img class="descr-star" src="data/imgs/star.png" alt="⭐" width="16" height="16">
         based on ${d.review_count} reviews</p>
         <p>Address: ${address}</p>
+         <div class="tags">
+        ${categories}
+        </div>
         <div class="card-body">
         <div class="chat-bubble">
         <p>${d.snippet_text}</p>
@@ -530,7 +534,6 @@
     }
 
     load_map();
-
     // DRAGGABLE YAYAYAY!!
     let isDragging = false;
     let draggable = document.getElementById("draggable");
@@ -543,62 +546,65 @@
     draggable.addEventListener("mousedown", function (event) {
       isDragging = true;
       draggable.style.cursor = "grabbing";
+      document.querySelector(".speech-bubble").style.display = "none"; // Hide speech bubble when dragging
     });
 
     document.addEventListener("mousemove", function (event) {
       if (isDragging) {
-        draggable.style.left = event.pageX - 25 + "px";  
-        draggable.style.top = event.pageY - 60 + "px";   // feet follow mouse
+        draggable.style.left = event.pageX - 30 + "px";
+        draggable.style.top = event.pageY - 65 + "px";   // feet follow mouse
       }
     });
 
-// Handle drop event
-document.addEventListener("mouseup", function (event) {
-  if (isDragging) {
-    isDragging = false;
-    draggable.style.cursor = "grab";
+    // Handle drop event
+    document.addEventListener("mouseup", function (event) {
+      if (isDragging) {
+        isDragging = false;
+        draggable.style.cursor = "grab";
 
-    const mapContainer = document.getElementById("map");
-    const rect = mapContainer.getBoundingClientRect();
+        const mapContainer = document.getElementById("map");
+        const rect = mapContainer.getBoundingClientRect();
 
-    if (
-      event.clientX > rect.left &&
-      event.clientX < rect.right &&
-      event.clientY > rect.top &&
-      event.clientY < rect.bottom
-    ) {
-      const x = event.clientX - rect.left;
-      const y = event.clientY - rect.top;
-      const latlng = map.containerPointToLatLng([x, y]);
+        if (
+          event.clientX > rect.left &&
+          event.clientX < rect.right &&
+          event.clientY > rect.top &&
+          event.clientY < rect.bottom
+        ) {
+          const x = event.clientX - rect.left;
+          const y = event.clientY - rect.top;
+          const latlng = map.containerPointToLatLng([x, y]);
 
-      // DEBUGGING: Log the lat/lng of the drop location
-      console.log("Dropped at:", latlng);
+          // DEBUGGING: Log the lat/lng of the drop location
+          // console.log("Dropped at:", latlng);
 
-      // Reset marker if it already exists
-      if (droppedMarker) {
-        map.removeLayer(droppedMarker);
+          if (droppedMarker) {
+            map.removeLayer(droppedMarker);
+          }
+
+          droppedMarker = L.marker([latlng.lat, latlng.lng], {
+            icon: L.icon({
+              iconUrl: 'data/imgs/people.png',
+              iconSize: [60, 65], // size of image CUSTOMIZE
+              iconAnchor: [30, 65],
+              popupAnchor: [0, -65]
+            })
+          }).addTo(map)
+            .bindPopup(`Dropped here:<br>Lat: ${latlng.lat.toFixed(5)}<br>Lng: ${latlng.lng.toFixed(5)}`)
+            .openPopup();
+
+          draggable.style.left = "31%";
+          draggable.style.top = "4%";
+
+          user_actions([latlng.lat, latlng.lng]);
+        } else {
+          document.querySelector(".speech-bubble").style.display = "block"; // Show speech bubble if not dropped on map
+        }
       }
+    });
 
-      // Create a custom marker with the PNG image, anchor at the bottom center (feet)
-      droppedMarker = L.marker([latlng.lat, latlng.lng], {
-        icon: L.icon({
-          iconUrl: 'data/imgs/people.png',  // Use your image URL here
-          iconSize: [50, 50], // Size of the image (adjust to your PNG size)
-          iconAnchor: [25, 50],  // Position the anchor at the bottom-middle of the image
-          popupAnchor: [0, -50]  // Popup will appear above the feet of the image
-        })
-      }).addTo(map)
-        .bindPopup(`Dropped here:<br>Lat: ${latlng.lat.toFixed(5)}<br>Lng: ${latlng.lng.toFixed(5)}`)
-        .openPopup();
-
-      // Reset draggable marker's position (optional)
-      draggable.style.left = "300px";  // Starting position (optional)
-      draggable.style.top = "5px";  // Starting position (optional)
-
-      user_actions([latlng.lat, latlng.lng]);
-    }
-  }
-});
+    draggable.style.width = "60px";
+    draggable.style.height = "65px";
 
 
     // LE SCATTERPLOT
@@ -634,7 +640,19 @@ document.addEventListener("mouseup", function (event) {
         .domain([3, 5])
         .range(["orange", "green"]);
 
-      // Draw scatter points
+      // svg.append("text")
+      //   .attr("transform", "translate(" + (width / 2) + "," + (height + margin.bottom) + ")")
+      //   .style("text-anchor", "middle")
+      //   .text("Distance (miles)");
+
+      // svg.append("text")
+      //   .attr("transform", "rotate(-90)")
+      //   .attr("y", 0 - margin.left)
+      //   .attr("x", 0 - (height / 2))
+      //   .style("text-anchor", "middle")
+      //   .text("Our Score");
+
+
       const points = svg.selectAll("circle")
         .data(data)
         .enter().append("circle")
@@ -724,7 +742,7 @@ document.addEventListener("mouseup", function (event) {
       });
     }
 
-    user_actions([42.3601, -71.0589]); // TODO: CHANGE BUILD DRAG AND DROP
+    user_actions([]); // TODO: CHANGE BUILD DRAG AND DROP
 
 
   </script>
