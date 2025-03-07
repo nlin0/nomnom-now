@@ -394,7 +394,11 @@
         </div>
        `;
           });
-        mapMarkers.push({ marker, category: d.search_category });
+        mapMarkers.push({
+          marker,
+          category: d.search_category,
+          originalData: d
+        });
       });
     };
 
@@ -664,18 +668,6 @@
         .domain([3, 5])
         .range(["orange", "green"]);
 
-      // svg.append("text")
-      //   .attr("transform", "translate(" + (width / 2) + "," + (height + margin.bottom) + ")")
-      //   .style("text-anchor", "middle")
-      //   .text("Distance (miles)");
-
-      // svg.append("text")
-      //   .attr("transform", "rotate(-90)")
-      //   .attr("y", 0 - margin.left)
-      //   .attr("x", 0 - (height / 2))
-      //   .style("text-anchor", "middle")
-      //   .text("Our Score");
-
       const points = svg.selectAll("circle")
         .data(data)
         .enter().append("circle")
@@ -685,30 +677,62 @@
         .attr("fill", d => colorScale(d.rating))
         .attr("opacity", 0.6);
 
-      // BRUSH
+      // BRUSH function
       const brush = d3.brush()
         .extent([[0, 0], [width - 60, height - 30]])
         .on("end", function (event) {
           if (!event.selection) {
-            points.attr("fill", d => colorScale(d.rating)); // le reset
+            points.attr("fill", d => colorScale(d.rating)); // Reset colors
+            resetMapMarkers();
             return;
           }
+
           const [[x0, y0], [x1, y1]] = event.selection;
+
+          // Track selected points
+          const selectedPoints = new Set();
 
           points.attr("fill", function (d) {
             const isSelected = x(d.distance) >= x0 && x(d.distance) <= x1 &&
               y(d.ourScore) >= y0 && y(d.ourScore) <= y1;
+
+            if (isSelected) {
+              selectedPoints.add(d.name);
+            }
+
             return isSelected ? "red" : colorScale(d.rating);
           });
 
+          updateMapMarkers(selectedPoints);
+
+          // Clicking anywhere resets the selection
           svg.on("click", () => {
             points.attr("fill", d => colorScale(d.rating));
-            svg.select(".brush").call(brush.move, null); // le reset
+            resetMapMarkers();
+            svg.select(".brush").call(brush.move, null);
           });
         });
+
       svg.append("g")
         .attr("class", "brush")
         .call(brush);
+    }
+
+    // map markers
+    function updateMapMarkers(selectedPoints) {
+      mapMarkers.forEach(({ marker, originalData }) => {
+        if (originalData && selectedPoints.has(originalData.name)) {
+          marker.setStyle({ fillColor: "red", fillOpacity: 1 });
+        } else {
+          marker.setStyle({ fillColor: "#A5CCD1", fillOpacity: 0.7 });
+        }
+      });
+    }
+
+    function resetMapMarkers() {
+      mapMarkers.forEach(({ marker }) => {
+        marker.setStyle({ fillColor: "#A5CCD1", fillOpacity: 0.7 });
+      });
     }
 
 
@@ -759,13 +783,11 @@
           });
 
           resolve(results);
-        }).catch(function (error) {
-          reject("Error loading the CSV file: " + error);
         });
       });
     }
 
-    user_actions([]); // TODO: CHANGE BUILD DRAG AND DROP
+    user_actions([]);
 
 
   </script>
