@@ -508,7 +508,7 @@
         filterButtonsContainer.appendChild(button);
       });
 
-      addAllButton(); // Ensures "CLEAR" button is only added once
+      addAllButton();
     }
 
     function addAllButton() {
@@ -615,8 +615,8 @@
             .bindPopup(`Dropped here:<br>Lat: ${latlng.lat.toFixed(5)}<br>Lng: ${latlng.lng.toFixed(5)}`)
             .openPopup();
 
-          draggable.style.left = "32%";
-          draggable.style.top = "1%";
+          draggable.style.left = "42%";
+          draggable.style.top = "7%";
 
           user_actions([latlng.lat, latlng.lng]);
         } else {
@@ -690,17 +690,14 @@
         .extent([[0, 0], [width - 60, height - 30]])
         .on("end", function (event) {
           if (!event.selection) {
-            // Reset all points and map markers if no selection
             points.attr("fill", d => colorScale(d.rating));
-            mapMarkers.forEach(({ marker }) => {
-              marker.setStyle({ fillColor: "#A5CCD1", fillOpacity: 0.7 });
-            });
+            load_map(yelpData); // Reload all markers
             return;
           }
 
           const [[x0, y0], [x1, y1]] = event.selection;
 
-          // Get selected points
+          // Filter brushed points
           const brushedPoints = data.filter(d => {
             return x(d.distance) >= x0 && x(d.distance) <= x1 &&
               y(d.ourScore) >= y0 && y(d.ourScore) <= y1;
@@ -709,21 +706,13 @@
           // Change scatterplot colors
           points.attr("fill", d => brushedPoints.includes(d) ? "red" : colorScale(d.rating));
 
-          // Update Leaflet map markers
-          mapMarkers.forEach(({ marker, data }) => {
-            if (data && brushedPoints.some(d => d.name === data.name)) {
-              marker.setStyle({ fillColor: "red", fillOpacity: 1 });
-            } else {
-              marker.setStyle({ fillColor: "#A5CCD1", fillOpacity: 0.7 });
-            }
-          });
+          // Update Leaflet map with only selected points
+          load_map(brushedPoints.map(d => d.originalData));
 
           // Reset on clicking outside
           svg.on("click", () => {
             points.attr("fill", d => colorScale(d.rating));
-            mapMarkers.forEach(({ marker }) => {
-              marker.setStyle({ fillColor: "#A5CCD1", fillOpacity: 0.7 });
-            });
+            load_map(yelpData); // Reload all markers
             svg.select(".brush").call(brush.move, null);
           });
         });
