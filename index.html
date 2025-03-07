@@ -12,7 +12,7 @@
     #map {
       margin: 0px;
       /*  vh = 98% of viewport */
-      height: 98vh; 
+      height: 98vh;
       width: 55%;
       float: right;
     }
@@ -35,6 +35,28 @@
       font-size: 14px;
       display: none;
       z-index: 1000;
+    }
+
+    .descr-star {
+      margin: 0px;
+      padding: 0px;
+      margin-bottom: -2px;
+    }
+
+    .chat-bubble {
+      /* background: #42a5f5; */
+      background: #A0B9BF;
+      color: #fff;
+      border-radius: 20px 20px 20px 2px;
+      display: block;
+      width: 99%;
+      padding: 7px 13px;
+      margin-top: 10px;
+    }
+
+    .card-body {
+      flex: 1 1 auto;
+      padding: 5px 5px;
     }
 
     /* #choropleth {
@@ -168,12 +190,21 @@
           .on("click", function () {
             const address = parseAddress(d.location_json);
             document.getElementById('details').innerHTML = `
-              <h3>${d.name}</h3>
-              <p>Rating: ${d.rating}</p>
-              <p>Review Count: ${d.review_count}</p>
-              <p>Categories: ${d.categories_json}</p>
-              <p>Snippet: ${d.snippet_text}</p>
-              <p>Address: ${address}</p>`;
+              <div class="descr-box">
+                <h3>${d.name}</h3>
+                <p>${d.rating} <img class="descr-star" src="data/imgs/star.png" alt="⭐" width="16" height="16">
+                  based on ${d.review_count} reviews</p>
+                <p>Address: ${address}</p>
+                <div class="card-body">
+                <div class="chat-bubble">
+                  <p>${d.snippet_text}</p>
+                </div>
+                </div>
+                <div class="tags">
+                  <p>Tags: ${d.categories_json}</p>
+                </div>
+              </div>
+             `;
           });
       });
     };
@@ -207,7 +238,8 @@
       if (Array.isArray(parsedCategories) && parsedCategories.length > 0) {
         firstCategory = parsedCategories[0][0];
       }
-      tooltip.innerHTML = `<strong>${name}</strong><br>⭐ ${rating} - ${firstCategory}`;
+      const stars = generateStars(rating);
+      tooltip.innerHTML = `<strong>${name}</strong><br>${firstCategory}<br>${stars}`;
       tooltip.style.display = "block";
       updateTooltipPosition(event);
     }
@@ -231,6 +263,21 @@
         console.error("Error parsing address:", e);
         return "Unknown address";
       }
+    }
+
+    function generateStars(rating) {
+      const fullStars = Math.floor(rating);
+      const hasHalfStar = rating % 1 !== 0;
+      let starsHTML = "";
+
+      for (let i = 0; i < fullStars; i++) {
+        starsHTML += `<img src="data/imgs/star.png" alt="⭐" width="16" height="16"> `;
+      }
+      if (hasHalfStar) {
+        starsHTML += `<img src="data/imgs/hstar.png" alt="⭐️" width="16" height="16"> `;
+      }
+
+      return starsHTML;
     }
 
     load_map();
