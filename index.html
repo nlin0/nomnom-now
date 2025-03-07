@@ -58,7 +58,7 @@
 
     .section {
       margin: 0;
-      margin-right: -6%;
+      margin-right: -5%;
       padding: 0;
       display: flex;
       justify-content: center;
@@ -197,14 +197,15 @@
     }
 
     #scatterplot-container {
-      width: 100%;
-      height: 390px;
+      width: 450px;
+      height: 400px;
       display: flex;
       justify-content: center;
       align-items: center;
     }
 
     #scatterplot {
+      margin-top: 50px;
       width: 100%;
       height: 100%;
     }
@@ -290,34 +291,52 @@
             updateTooltipPosition(event.originalEvent);
           })
           .on("mouseout", function () {
-            this.setStyle({
-              fillColor: fillColor,
-              fillOpacity: 0.7
-            });
-            this._path.style.transition = "fill 0.3s ease";
-            this._path.classList.remove("marker-hover");
-            animateRadius(this, 5);
+            if (!this.options.selected) {
+              this.setStyle({
+                fillColor: fillColor,
+                fillOpacity: 0.7
+              });
+              this._path.style.transition = "fill 0.3s ease";
+              this._path.classList.remove("marker-hover");
+              animateRadius(this, 5);
+            }
             hideTooltip();
           })
           .on("click", function () {
+            mapMarkers.forEach(({ marker }) => {
+              marker.setStyle({
+                fillColor: fillColor,
+                fillOpacity: 0.7
+              });
+              marker.options.selected = false;
+              animateRadius(marker, 5);
+            });
+
+            this.setStyle({
+              fillColor: "yellow",
+              fillOpacity: 1
+            });
+            this.options.selected = true;
+            animateRadius(this, 8);
+
             const address = parseAddress(d.location_json);
             const categories = JSON.parse(d.categories_json).map(category => `<div class="tag"><p class="tag-p">${category[0]}</p></div>`).join('');
             document.getElementById('details').innerHTML = `
-          <div class="descr-box">
-          <h3 class="restaurant">${d.name}</h3>
-          <div class="tags">
-            ${categories}
-          </div>
-          <p>${d.rating} <img class="descr-star" src="data/imgs/star.png" alt="⭐" width="16" height="16">
-            based on ${d.review_count} reviews</p>
-          <p>Address: ${address}</p>
-          <div class="card-body">
-          <div class="chat-bubble">
-            <p>${d.snippet_text}</p>
-          </div>
-          </div>
-          </div>
-         `;
+        <div class="descr-box">
+        <h3 class="restaurant">${d.name}</h3>
+        <div class="tags">
+        ${categories}
+        </div>
+        <p>${d.rating} <img class="descr-star" src="data/imgs/star.png" alt="⭐" width="16" height="16">
+        based on ${d.review_count} reviews</p>
+        <p>Address: ${address}</p>
+        <div class="card-body">
+        <div class="chat-bubble">
+        <p>${d.snippet_text}</p>
+        </div>
+        </div>
+        </div>
+       `;
           });
         mapMarkers.push({ marker, category: d.search_category });
       });
