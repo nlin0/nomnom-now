@@ -1,6 +1,18 @@
 THIS TXT FILE IS TO STORE BACKUP CHOROPLETH
 
 
+CSS:
+/* #choropleth {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+} */
+
+
+
+
+
 // CHOROPLETH
 // const map_fill = "#69b3a2"
 // const map_select = "#ffcc00"
@@ -12,6 +24,10 @@ THIS TXT FILE IS TO STORE BACKUP CHOROPLETH
 // const margin = { top: 20, right: 10, bottom: 20, left: 10 };
 // const map_width = width - margin.left - margin.right;
 // const map_height = height - margin.top - margin.bottom;
+
+
+
+
 
 
 inside load_map function:

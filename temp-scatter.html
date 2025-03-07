@@ -1,0 +1,192 @@
+////// SCATTERPLOT
+    function createScatterPlot(data) {
+      const margin = { top: 20, right: 30, bottom: 40, left: 40 };
+      const width = 500 - margin.left - margin.right;
+      const height = 400 - margin.top - margin.bottom;
+
+      const svg = d3.select("#scatterplot")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+      const x = d3.scaleLinear()
+        .domain([0, d3.max(data, d => parseFloat(d.distance))])
+        .range([0, width]);
+
+      const y = d3.scaleLinear()
+        .domain([2.95, d3.max(data, d => d.ourScore)])
+        .range([height, 0]);
+
+      const colorScale = d3.scaleLinear()
+        .domain([3, 5])
+        .range(["orange", "green"]);
+
+      svg.append("g")
+        .attr("transform", "translate(0," + height + ")")
+        .call(d3.axisBottom(x));
+
+      svg.append("g")
+        .call(d3.axisLeft(y));
+
+      const points = svg.selectAll("dot")
+        .data(data)
+        .enter().append("circle")
+        .attr("cx", d => x(d.distance))
+        .attr("cy", d => y(d.ourScore))
+        .attr("r", 3)
+        .attr("fill", d => colorScale(d.rating))
+        .attr("opacity", 0.5)
+        .on("mouseover", function (event, d) {
+          tooltip.transition().duration(200).style("opacity", .9);
+          tooltip.html(`Name: ${d.name}<br>Distance: ${d.distance} miles<br>Rating: ${d.rating}`)
+            .style("left", (event.pageX + 5) + "px")
+            .style("top", (event.pageY - 28) + "px");
+        })
+        .on("mouseout", function () {
+          tooltip.transition().duration(200).style("opacity", 0);
+        });
+
+      svg.append("text")
+        .attr("transform", "translate(" + (width / 2) + "," + (height + margin.bottom) + ")")
+        .style("text-anchor", "middle")
+        .text("Distance (miles)");
+
+      svg.append("text")
+        .attr("transform", "rotate(-90)")
+        .attr("y", 0 - margin.left)
+        .attr("x", 0 - (height / 2))
+        .style("text-anchor", "middle")
+        .text("Our Score");
+
+      const brush = d3.brush()
+        .extent([[0, 0], [width, height]])
+        .on("end", function (event) {
+          if (!event.selection) return;
+
+          const [[x0, y0], [x1, y1]] = event.selection;
+
+          const brushedPoints = data.filter(d => {
+            const px = x(d.distance);
+            const py = y(d.ourScore);
+            return px >= x0 && px <= x1 && py >= y0 && py <= y1;
+          });
+
+          console.log("Brushed Points:", brushedPoints);
+
+          points.attr("fill", function (d) {
+            return brushedPoints.includes(d) ? "red" : colorScale(d.rating);
+          });
+        });
+
+      svg.append("g")
+        .attr("class", "brush")
+        .call(brush);
+
+      const tooltip = d3.select("body").append("div")
+        .attr("class", "tooltip");
+
+      const legendWidth = 200;
+      const legendHeight = 10;
+
+      const legend = svg.append("g")
+        .attr("class", "legend")
+        .attr("transform", "translate(" + (width - legendWidth - 10) + "," + 20 + ")");
+
+      const gradient = legend.append("defs")
+        .append("linearGradient")
+        .attr("id", "gradient")
+        .attr("x1", "0%")
+        .attr("y1", "0%")
+        .attr("x2", "100%")
+        .attr("y2", "0%");
+
+      gradient.append("stop")
+        .attr("offset", "0%")
+        .attr("stop-color", "orange");
+
+      gradient.append("stop")
+        .attr("offset", "100%")
+        .attr("stop-color", "green");
+
+      legend.append("rect")
+        .attr("width", legendWidth)
+        .attr("height", legendHeight)
+        .style("fill", "url(#gradient)");
+
+      const legendScale = d3.scaleLinear()
+        .domain([3, 5])
+        .range([0, legendWidth]);
+
+      const legendAxis = d3.axisBottom(legendScale)
+        .ticks(5)
+        .tickSize(10);
+
+      legend.append("g")
+        .attr("transform", "translate(0," + legendHeight + ")")
+        .call(legendAxis);
+
+      legend.append("text")
+        .attr("x", legendWidth / 2)
+        .attr("y", -10)
+        .attr("text-anchor", "middle")
+        .text("Reviewer's Rating");
+    }
+
+
+    /////// FUNCTION PLAYGROUND PT2
+    async function user_actions(click_info) {
+      try {
+        const distance_json = await loadAndCalculateDistances(click_info[0], click_info[1]);
+        createScatterPlot(distance_json);
+      } catch (error) {
+        console.error("Error:", error);
+      }
+    }
+
+    function haversine(lat1, lon1, lat2, lon2) {
+      const R = 6371;
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+
+      const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c * 0.6214;
+    }
+
+    function loadAndCalculateDistances(lat, lon) {
+      return new Promise((resolve, reject) => {
+        d3.csv("data/yelp_boston.csv").then(function (data) {
+          let results = [];
+
+          data.forEach(function (restaurant) {
+            const restLat = parseFloat(restaurant.latitude);
+            const restLon = parseFloat(restaurant.longitude);
+            const reviewCount = parseInt(restaurant.review_count);
+            const rating = parseFloat(restaurant.rating);
+
+            const k = 3;
+            const ourScore = rating * reviewCount / (reviewCount + k);
+
+            const distance = haversine(lat, lon, restLat, restLon);
+
+            results.push({
+              name: restaurant.name,
+              distance: distance.toFixed(2),
+              ourScore: ourScore.toFixed(2),
+              rating: restaurant.rating,
+              originalData: restaurant
+            });
+          });
+
+          resolve(results);
+        }).catch(function (error) {
+          reject("Error loading the CSV file: " + error);
+        });
+      });
+    }
+
+    user_actions([42.3601, -71.0589]); // TODO: CHANGE BUILD DRAG AND DROP
