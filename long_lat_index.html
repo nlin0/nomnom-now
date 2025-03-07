@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Restaurant Distance and Rating Scatterplot</title>
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <style>
+        .tooltip {
+            position: absolute;
+            background-color: white;
+            border: 1px solid #ccc;
+            padding: 5px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+    </style>
+</head>
+<body>
+    <script>
+        async function user_actions(click_info) {
+
+            try {
+                // Wait for the promise to resolve and get the JSON result
+                const distance_json = await loadAndCalculateDistances(click_info[0], click_info[1]);
+                //console.log(distance_json);  // Log the JSON once resolved
+
+                // After calculating distances, generate the scatter plot
+                createScatterPlot(distance_json);
+            } catch (error) {
+                console.error("Error:", error);  // Handle any errors
+            }
+        }
+
+        // The Haversine formula to calculate distance between two lat/lng points
+        function haversine(lat1, lon1, lat2, lon2) {
+            const R = 6371; // Earth radius in km
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+
+            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c * 0.6214; // distance in miles
+        }
+
+        // Function to load CSV and calculate distances, with normalization based on review_count
+        function loadAndCalculateDistances(lat, lon) {
+            return new Promise((resolve, reject) => {
+                // Load the CSV file
+                d3.csv("data/yelp_boston.csv").then(function(data) {
+                    let results = []; // Initialize an array to store the results
+
+                    // Loop through each restaurant and calculate distance and normalized rating
+                    data.forEach(function(restaurant) {
+                        // Parse the latitude and longitude from the CSV data
+                        const restLat = parseFloat(restaurant.latitude);
+                        const restLon = parseFloat(restaurant.longitude);
+                        const reviewCount = parseInt(restaurant.review_count); // Get the review count
+                        const rating = parseFloat(restaurant.rating);
+
+                        // Normalize the rating based on review count (with k = 10 as an example)
+                        const k = 3;
+                        const ourScore = rating * reviewCount / (reviewCount + k);
+
+                        // Calculate the distance using the Haversine formula
+                        const distance = haversine(lat, lon, restLat, restLon);
+
+                        // Store the result as an object with name, distance, and normalized rating
+                        results.push({
+                            name: restaurant.name,
+                            distance: distance.toFixed(2), // Store distance with 2 decimal places
+                            ourScore: ourScore.toFixed(2), // Normalized rating
+                            rating: restaurant.rating,
+                            originalData: restaurant  // Store the original restaurant data for later use
+                        });
+                    });
+
+                    // Resolve the promise with the results (returning the JSON)
+                    resolve(results);
+                }).catch(function(error) {
+                    // Reject the promise in case of an error
+                    reject("Error loading the CSV file: " + error);
+                });
+            });
+        }
+
+        // Function to create a scatter plot with D3.js
+        function createScatterPlot(data) {
+            // Set the dimensions of the plot
+            const margin = { top: 20, right: 30, bottom: 40, left: 40 };
+            const width = 800 - margin.left - margin.right;
+            const height = 600 - margin.top - margin.bottom;
+
+            // Create the SVG element for the scatter plot
+            const svg = d3.select("body").append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+                .append("g")
+                .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+            // Create the x and y scales
+            const x = d3.scaleLinear()
+                .domain([0, d3.max(data, d => parseFloat(d.distance))])
+                .range([0, width]);
+
+            const y = d3.scaleLinear()
+                .domain([2.95, d3.max(data, d => d.ourScore)])
+                .range([height, 0]);
+
+            // Create a color scale for the ratings (from orange to green)
+            const colorScale = d3.scaleLinear()
+                .domain([3, 5])  // Rating range (1 - 5)
+                .range(["orange", "green"]);  // Color range (orange for low ratings, green for high ratings)
+
+            // Add the x-axis
+            svg.append("g")
+                .attr("transform", "translate(0," + height + ")")
+                .call(d3.axisBottom(x));
+
+            // Add the y-axis
+            svg.append("g")
+                .call(d3.axisLeft(y));
+
+            // Add the points (circles) for each restaurant
+            const points = svg.selectAll("dot")
+                .data(data)
+                .enter().append("circle")
+                .attr("cx", d => x(d.distance))
+                .attr("cy", d => y(d.ourScore))
+                .attr("r", 5)
+                .attr("fill", d => colorScale(d.rating))
+                .attr("opacity", 0.5)  // Set opacity to 50%
+                .on("mouseover", function(event, d) {
+                    // Show tooltip on hover
+                    tooltip.transition().duration(200).style("opacity", .9);
+                    tooltip.html(`Name: ${d.name}<br>Distance: ${d.distance} miles<br>Rating: ${d.rating}`)
+                        .style("left", (event.pageX + 5) + "px")
+                        .style("top", (event.pageY - 28) + "px");
+                })
+                .on("mouseout", function() {
+                    tooltip.transition().duration(200).style("opacity", 0); // Hide tooltip
+                });
+
+            // Add labels for axes
+            svg.append("text")
+                .attr("transform", "translate(" + (width / 2) + "," + (height + margin.bottom) + ")")
+                .style("text-anchor", "middle")
+                .text("Distance (miles)");
+
+            svg.append("text")
+                .attr("transform", "rotate(-90)")
+                .attr("y", 0 - margin.left)
+                .attr("x", 0 - (height / 2))
+                .style("text-anchor", "middle")
+                .text("Our Score");
+
+            // Create the brush tool
+            const brush = d3.brush()
+                .extent([[0, 0], [width, height]])  // Set the extent of the brush (bounding box)
+                .on("end", function(event) {
+                    if (!event.selection) return;  // If no selection, do nothing
+
+                    // Get the brushed area coordinates
+                    const [[x0, y0], [x1, y1]] = event.selection;
+
+                    // Filter data points within the brushed area
+                    const brushedPoints = data.filter(d => {
+                        const px = x(d.distance);
+                        const py = y(d.ourScore);
+                        return px >= x0 && px <= x1 && py >= y0 && py <= y1;
+                    });
+
+                    // Log the brushed points and associated restaurant names
+                    console.log("Brushed Points:", brushedPoints);
+
+                    // Change the color of the brushed points to red
+                    points.attr("fill", function(d) {
+                        return brushedPoints.includes(d) ? "red" : colorScale(d.rating);
+                    });
+                });
+
+            // Add the brush to the plot
+            svg.append("g")
+                .attr("class", "brush")
+                .call(brush);
+
+            // Create the tooltip (hidden by default)
+            const tooltip = d3.select("body").append("div")
+                .attr("class", "tooltip");
+
+            // Add the legend
+            const legendWidth = 200;
+            const legendHeight = 10;
+
+            // Define the gradient for the color scale
+            const legend = svg.append("g")
+                .attr("class", "legend")
+                .attr("transform", "translate(" + (width - legendWidth - 10) + "," + 20 + ")");
+
+            const gradient = legend.append("defs")
+                .append("linearGradient")
+                .attr("id", "gradient")
+                .attr("x1", "0%")
+                .attr("y1", "0%")
+                .attr("x2", "100%")
+                .attr("y2", "0%");
+
+            gradient.append("stop")
+                .attr("offset", "0%")
+                .attr("stop-color", "orange");
+
+            gradient.append("stop")
+                .attr("offset", "100%")
+                .attr("stop-color", "green");
+
+            // Add the gradient bar
+            legend.append("rect")
+                .attr("width", legendWidth)
+                .attr("height", legendHeight)
+                .style("fill", "url(#gradient)");
+
+            // Add the legend axis
+            const legendScale = d3.scaleLinear()
+                .domain([3, 5])
+                .range([0, legendWidth]);
+
+            const legendAxis = d3.axisBottom(legendScale)
+                .ticks(5)
+                .tickSize(10);
+
+            legend.append("g")
+                .attr("transform", "translate(0," + legendHeight + ")")
+                .call(legendAxis);
+
+            // Add a label for the legend
+            legend.append("text")
+                .attr("x", legendWidth / 2)
+                .attr("y", -10)
+                .attr("text-anchor", "middle")
+                .text("Reviewer's Rating");
+        }
+
+        // Call the user_actions function with actual coordinates
+        user_actions([42.3601, -71.0589]);  // Example: Coordinates for Boston
+    </script>
+</body>
+</html>
