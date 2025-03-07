@@ -159,20 +159,47 @@
       padding: 50px;
       position: relative;
     } */
-
     .filter-button {
-      padding: 10px 20px;
+      padding: 10px;
+      padding-top: 20px;
+      padding-bottom: 20px;
       background-color: rgb(133, 166, 179);
       color: white;
       border: none;
       cursor: pointer;
+      flex: 1 1 100px;
+      text-align: center;
+      width: 50px;
+      font-size: 10px;
+      transition: all 0.3s ease;
+      z-index: 1;
+    }
+
+    .filter-button:hover {
+      background-color: #A0B9BF;
+      transform: scale(1.1);
+      font-size: 14px;
+      width: 70px;
+      z-index: 100;
     }
 
     .filter-button.active {
-      background-color: #42a5f5;
+      background-color: #EDD9A3;
+      color: black;
     }
 
-  
+    .button-list {
+      display: flex;
+      justify-content: center;
+    }
+
+    .filter-buttons {
+      display: flex;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      width: 200%;
+      margin-bottom: 10px;
+    }
 
     @media (max-width: 1150px) {
       .nom-nom {
@@ -193,7 +220,7 @@
       <div class="nom-nom">
         <h2>nom nom now</h2>
       </div>
-      <p id="details">Click on a point to see the details.</p>
+      <p id="details">Click on a point to see the details. Click on filters below to narrow results.</p>
     </div>
     <div id="map"></div>
     <div id="tooltip" class="tooltip"></div>
@@ -205,7 +232,7 @@
 
   <!-- <div class="scatterplot-container">
     <svg id="scatterplot"></svg>
-  </div> -->
+    </div> -->
 
   <script>
     const accessToken = 'pk.eyJ1IjoibmpsNTUiLCJhIjoiY203eHF2cTZzMDF6NDJycHk2NHRsMTBlOCJ9.YsiJ8vNV_ct2Ml_f1hAFLg';
@@ -237,41 +264,41 @@
       addAllButton();
 
       yelpData.forEach(d => {
-      const marker = L.circleMarker([+d.latitude, +d.longitude], {
-        radius: 5,
-        fillColor: fillColor,
-        color: "black",
-        weight: 0.5,
-        opacity: 0.7,
-        fillOpacity: 0.7,
-      }).addTo(map)
-        .on("mouseover", function (event) {
-        this.setStyle({
-          fillColor: "yellow",
-          fillOpacity: 1
-        });
-        this._path.style.transition = "fill 0.3s ease";
-        this._path.classList.add("marker-hover");
-        animateRadius(this, 8);
-        showTooltip(event.originalEvent, d.name, d.rating, d.categories_json);
-        })
-        .on("mousemove", function (event) {
-        updateTooltipPosition(event.originalEvent);
-        })
-        .on("mouseout", function () {
-        this.setStyle({
+        const marker = L.circleMarker([+d.latitude, +d.longitude], {
+          radius: 5,
           fillColor: fillColor,
-          fillOpacity: 0.7
-        });
-        this._path.style.transition = "fill 0.3s ease";
-        this._path.classList.remove("marker-hover");
-        animateRadius(this, 5);
-        hideTooltip();
-        })
-        .on("click", function () {
-        const address = parseAddress(d.location_json);
-        const categories = JSON.parse(d.categories_json).map(category => `<div class="tag"><p class="tag-p">${category[0]}</p></div>`).join('');
-        document.getElementById('details').innerHTML = `
+          color: "black",
+          weight: 0.5,
+          opacity: 0.7,
+          fillOpacity: 0.7,
+        }).addTo(map)
+          .on("mouseover", function (event) {
+            this.setStyle({
+              fillColor: "yellow",
+              fillOpacity: 1
+            });
+            this._path.style.transition = "fill 0.3s ease";
+            this._path.classList.add("marker-hover");
+            animateRadius(this, 8);
+            showTooltip(event.originalEvent, d.name, d.rating, d.categories_json);
+          })
+          .on("mousemove", function (event) {
+            updateTooltipPosition(event.originalEvent);
+          })
+          .on("mouseout", function () {
+            this.setStyle({
+              fillColor: fillColor,
+              fillOpacity: 0.7
+            });
+            this._path.style.transition = "fill 0.3s ease";
+            this._path.classList.remove("marker-hover");
+            animateRadius(this, 5);
+            hideTooltip();
+          })
+          .on("click", function () {
+            const address = parseAddress(d.location_json);
+            const categories = JSON.parse(d.categories_json).map(category => `<div class="tag"><p class="tag-p">${category[0]}</p></div>`).join('');
+            document.getElementById('details').innerHTML = `
           <div class="descr-box">
           <h3 class="restaurant">${d.name}</h3>
           <div class="tags">
@@ -287,7 +314,7 @@
           </div>
           </div>
          `;
-        });
+          });
       });
     };
 
@@ -295,11 +322,21 @@
       const filterButtonsContainer = document.getElementById('filter-buttons');
       const button = document.createElement('button');
       button.className = 'filter-button';
-      button.textContent = 'CLEAR SELECTION';
+      button.textContent = 'CLEAR';
       button.onclick = () => {
-      selectedCategories.clear();
-      updateFilterButtons();
-      user_actions([42.3601, -71.0589]);
+        selectedCategories.clear();
+        updateFilterButtons();
+        user_actions([42.3601, -71.0589]);
+      };
+      button.onmouseover = () => {
+        button.style.backgroundColor = '#EDD9A3';
+        button.style.color = 'black';
+      };
+      button.onmouseout = () => {
+        if (!selectedCategories.size) {
+          button.style.backgroundColor = 'rgb(133, 166, 179)';
+          button.style.color = 'white';
+        }
       };
       filterButtonsContainer.appendChild(button);
     }
@@ -311,14 +348,14 @@
       const startTime = performance.now();
 
       function animate(time) {
-      const elapsed = time - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-      const currentRadius = startRadius + (newRadius - startRadius) * progress;
-      marker.setStyle({ radius: currentRadius });
+        const elapsed = time - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const currentRadius = startRadius + (newRadius - startRadius) * progress;
+        marker.setStyle({ radius: currentRadius });
 
-      if (progress < 1) {
-        requestAnimationFrame(animate);
-      }
+        if (progress < 1) {
+          requestAnimationFrame(animate);
+        }
       }
 
       requestAnimationFrame(animate);
@@ -330,7 +367,7 @@
       let firstCategory = "";
       const parsedCategories = JSON.parse(categories);
       if (Array.isArray(parsedCategories) && parsedCategories.length > 0) {
-      firstCategory = parsedCategories[0][0];
+        firstCategory = parsedCategories[0][0];
       }
       const stars = generateStars(rating);
       tooltip.innerHTML = `<strong>${name}</strong><br>${firstCategory}<br>${stars}`;
@@ -350,12 +387,12 @@
 
     function parseAddress(locationJson) {
       try {
-      const location = JSON.parse(locationJson);
-      const address = location.display_address.join(", ");
-      return address;
+        const location = JSON.parse(locationJson);
+        const address = location.display_address.join(", ");
+        return address;
       } catch (e) {
-      console.error("Error parsing address:", e);
-      return "Unknown address";
+        console.error("Error parsing address:", e);
+        return "Unknown address";
       }
     }
 
@@ -366,10 +403,10 @@
       let starsHTML = "";
 
       for (let i = 0; i < fullStars; i++) {
-      starsHTML += `<img src="data/imgs/star.png" alt="⭐" width="16" height="16"> `;
+        starsHTML += `<img src="data/imgs/star.png" alt="⭐" width="16" height="16"> `;
       }
       if (hasHalfStar) {
-      starsHTML += `<img src="data/imgs/hstar.png" alt="⭐️" width="16" height="16"> `;
+        starsHTML += `<img src="data/imgs/hstar.png" alt="⭐️" width="16" height="16"> `;
       }
 
       return starsHTML;
@@ -379,16 +416,16 @@
     function generateFilterButtons(data) {
       const categories = new Set();
       data.forEach(d => {
-      categories.add(d.search_category);
+        categories.add(d.search_category);
       });
 
       const filterButtonsContainer = document.getElementById('filter-buttons');
       categories.forEach(category => {
-      const button = document.createElement('button');
-      button.className = 'filter-button';
-      button.textContent = category;
-      button.onclick = () => toggleCategoryFilter(category);
-      filterButtonsContainer.appendChild(button);
+        const button = document.createElement('button');
+        button.className = 'filter-button';
+        button.textContent = category;
+        button.onclick = () => toggleCategoryFilter(category);
+        filterButtonsContainer.appendChild(button);
       });
     }
 
@@ -396,9 +433,9 @@
 
     function toggleCategoryFilter(category) {
       if (selectedCategories.has(category)) {
-      selectedCategories.delete(category);
+        selectedCategories.delete(category);
       } else {
-      selectedCategories.add(category);
+        selectedCategories.add(category);
       }
       updateFilterButtons();
       user_actions([42.3601, -71.0589]);
@@ -407,64 +444,64 @@
     function updateFilterButtons() {
       const buttons = document.querySelectorAll('.filter-button');
       buttons.forEach(button => {
-      if (selectedCategories.has(button.textContent)) {
-        button.classList.add('active');
-      } else {
-        button.classList.remove('active');
-      }
+        if (selectedCategories.has(button.textContent)) {
+          button.classList.add('active');
+        } else {
+          button.classList.remove('active');
+        }
       });
     }
 
     async function user_actions(coords) {
       const yelpData = await d3.csv("data/yelp_boston.csv");
       const filteredData = yelpData.filter(d => {
-      return selectedCategories.size === 0 || Array.from(selectedCategories).some(category => d.search_category.includes(category));
+        return selectedCategories.size === 0 || Array.from(selectedCategories).some(category => d.search_category.includes(category));
       });
 
       // Clear existing markers
       map.eachLayer(layer => {
-      if (layer instanceof L.CircleMarker) {
-        map.removeLayer(layer);
-      }
+        if (layer instanceof L.CircleMarker) {
+          map.removeLayer(layer);
+        }
       });
 
       // Add filtered markers
       filteredData.forEach(d => {
-      const marker = L.circleMarker([+d.latitude, +d.longitude], {
-        radius: 5,
-        fillColor: "#A5CCD1",
-        color: "black",
-        weight: 0.5,
-        opacity: 0.7,
-        fillOpacity: 0.7,
-      }).addTo(map)
-        .on("mouseover", function (event) {
-        this.setStyle({
-          fillColor: "yellow",
-          fillOpacity: 1
-        });
-        this._path.style.transition = "fill 0.3s ease";
-        this._path.classList.add("marker-hover");
-        animateRadius(this, 8);
-        showTooltip(event.originalEvent, d.name, d.rating, d.categories_json);
-        })
-        .on("mousemove", function (event) {
-        updateTooltipPosition(event.originalEvent);
-        })
-        .on("mouseout", function () {
-        this.setStyle({
+        const marker = L.circleMarker([+d.latitude, +d.longitude], {
+          radius: 5,
           fillColor: "#A5CCD1",
-          fillOpacity: 0.7
-        });
-        this._path.style.transition = "fill 0.3s ease";
-        this._path.classList.remove("marker-hover");
-        animateRadius(this, 5);
-        hideTooltip();
-        })
-        .on("click", function () {
-        const address = parseAddress(d.location_json);
-        const categories = JSON.parse(d.categories_json).map(category => `<div class="tag"><p class="tag-p">${category[0]}</p></div>`).join('');
-        document.getElementById('details').innerHTML = `
+          color: "black",
+          weight: 0.5,
+          opacity: 0.7,
+          fillOpacity: 0.7,
+        }).addTo(map)
+          .on("mouseover", function (event) {
+            this.setStyle({
+              fillColor: "yellow",
+              fillOpacity: 1
+            });
+            this._path.style.transition = "fill 0.3s ease";
+            this._path.classList.add("marker-hover");
+            animateRadius(this, 8);
+            showTooltip(event.originalEvent, d.name, d.rating, d.categories_json);
+          })
+          .on("mousemove", function (event) {
+            updateTooltipPosition(event.originalEvent);
+          })
+          .on("mouseout", function () {
+            this.setStyle({
+              fillColor: "#A5CCD1",
+              fillOpacity: 0.7
+            });
+            this._path.style.transition = "fill 0.3s ease";
+            this._path.classList.remove("marker-hover");
+            animateRadius(this, 5);
+            hideTooltip();
+          })
+          .on("click", function () {
+            const address = parseAddress(d.location_json);
+            const categories = JSON.parse(d.categories_json).map(category => `<div class="tag"><p class="tag-p">${category[0]}</p></div>`).join('');
+            document.getElementById('details').innerHTML = `
           <div class="descr-box">
           <h3 class="restaurant">${d.name}</h3>
           <div class="tags">
@@ -480,7 +517,7 @@
           </div>
           </div>
          `;
-        });
+          });
       });
     }
 
