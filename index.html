@@ -198,7 +198,7 @@
 
     #scatterplot-container {
       width: 100%;
-      height: 380px;
+      height: 390px;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -259,6 +259,7 @@
       accessToken: accessToken
     }).addTo(map);
 
+    const mapMarkers = [];
     const load_map = async function () {
       const fillColor = "#A5CCD1";
       const yelpData = await d3.csv("data/yelp_boston.csv");
@@ -318,6 +319,7 @@
           </div>
          `;
           });
+        mapMarkers.push({ marker, category: d.search_category });
       });
     };
 
@@ -416,13 +418,13 @@
     }
 
     // filter buttons
-    function generateFilterButtons(data) {
-      const categories = new Set();
-      data.forEach(d => {
-        categories.add(d.search_category);
-      });
+    const selectedCategories = new Set();
 
+    function generateFilterButtons(data) {
+      const categories = new Set(data.map(d => d.search_category));
       const filterButtonsContainer = document.getElementById('filter-buttons');
+      filterButtonsContainer.innerHTML = ""; // Clear previous buttons
+
       categories.forEach(category => {
         const button = document.createElement('button');
         button.className = 'filter-button';
@@ -430,9 +432,24 @@
         button.onclick = () => toggleCategoryFilter(category);
         filterButtonsContainer.appendChild(button);
       });
+
+      addAllButton(); // Ensures "CLEAR" button is only added once
     }
 
-    const selectedCategories = new Set();
+    function addAllButton() {
+      const filterButtonsContainer = document.getElementById('filter-buttons');
+      if (!document.querySelector('.filter-button.clear')) {
+        const button = document.createElement('button');
+        button.className = 'filter-button clear';
+        button.textContent = 'CLEAR';
+        button.onclick = () => {
+          selectedCategories.clear();
+          updateFilterButtons();
+          filterMarkers();
+        };
+        filterButtonsContainer.appendChild(button);
+      }
+    }
 
     function toggleCategoryFilter(category) {
       if (selectedCategories.has(category)) {
@@ -441,86 +458,22 @@
         selectedCategories.add(category);
       }
       updateFilterButtons();
-      user_actions([42.3601, -71.0589]);
+      filterMarkers();
     }
 
     function updateFilterButtons() {
-      const buttons = document.querySelectorAll('.filter-button');
-      buttons.forEach(button => {
-        if (selectedCategories.has(button.textContent)) {
-          button.classList.add('active');
-        } else {
-          button.classList.remove('active');
-        }
+      document.querySelectorAll('.filter-button').forEach(button => {
+        button.classList.toggle('active', selectedCategories.has(button.textContent));
       });
     }
 
-    async function user_actions(coords) {
-      const yelpData = await d3.csv("data/yelp_boston.csv");
-      const filteredData = yelpData.filter(d => {
-        return selectedCategories.size === 0 || Array.from(selectedCategories).some(category => d.search_category.includes(category));
-      });
-
-      // Clear existing markers
-      map.eachLayer(layer => {
-        if (layer instanceof L.CircleMarker) {
-          map.removeLayer(layer);
+    function filterMarkers() {
+      mapMarkers.forEach(({ marker, category }) => {
+        if (selectedCategories.size === 0 || selectedCategories.has(category)) {
+          marker.addTo(map);
+        } else {
+          map.removeLayer(marker);
         }
-      });
-
-      // Add filtered markers
-      filteredData.forEach(d => {
-        const marker = L.circleMarker([+d.latitude, +d.longitude], {
-          radius: 5,
-          fillColor: "#A5CCD1",
-          color: "black",
-          weight: 0.5,
-          opacity: 0.7,
-          fillOpacity: 0.7,
-        }).addTo(map)
-          .on("mouseover", function (event) {
-            this.setStyle({
-              fillColor: "yellow",
-              fillOpacity: 1
-            });
-            this._path.style.transition = "fill 0.3s ease";
-            this._path.classList.add("marker-hover");
-            animateRadius(this, 8);
-            showTooltip(event.originalEvent, d.name, d.rating, d.categories_json);
-          })
-          .on("mousemove", function (event) {
-            updateTooltipPosition(event.originalEvent);
-          })
-          .on("mouseout", function () {
-            this.setStyle({
-              fillColor: "#A5CCD1",
-              fillOpacity: 0.7
-            });
-            this._path.style.transition = "fill 0.3s ease";
-            this._path.classList.remove("marker-hover");
-            animateRadius(this, 5);
-            hideTooltip();
-          })
-          .on("click", function () {
-            const address = parseAddress(d.location_json);
-            const categories = JSON.parse(d.categories_json).map(category => `<div class="tag"><p class="tag-p">${category[0]}</p></div>`).join('');
-            document.getElementById('details').innerHTML = `
-          <div class="descr-box">
-          <h3 class="restaurant">${d.name}</h3>
-          <div class="tags">
-            ${categories}
-          </div>
-          <p>${d.rating} <img class="descr-star" src="data/imgs/star.png" alt="⭐" width="16" height="16">
-            based on ${d.review_count} reviews</p>
-          <p>Address: ${address}</p>
-          <div class="card-body">
-          <div class="chat-bubble">
-            <p>${d.snippet_text}</p>
-          </div>
-          </div>
-          </div>
-         `;
-          });
       });
     }
 
