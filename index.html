@@ -701,6 +701,12 @@
       const colorScale = d3.scaleLinear()
         .domain([3, 5])
         .range(["orange", "green"]);
+      svg.append("text")
+        .attr("transform", "translate(" + (width/2-20) + "," + (height) + ")")
+        .style("text-anchor", "middle")
+        .style("fill", "black")  // Add a color to the text
+        .style("font-size", "14px") // Set font size
+        .text("Distance (miles)");
 
       const points = svg.selectAll("circle")
         .data(data)
