@@ -87,7 +87,6 @@
       background-color: #accbd24f;
       padding: 30px;
       margin: 0px;
-
     }
 
     .chat-bubble {
@@ -242,6 +241,7 @@
       height: 25px;
       margin: 0px;
       cursor: pointer;
+      margin-left: 94%;
     }
 
     .scatter-descr {
@@ -249,13 +249,16 @@
       opacity: 0;
       transition: opacity 0.2s ease-in-out;
       position: absolute;
-      background: rgba(0, 0, 0, 0.8);
+      background: rgba(47, 68, 78, 0.744);
       color: white;
       padding: 10px;
       border-radius: 5px;
       font-size: 12px;
       width: 250px;
       top: 30px;
+
+      margin-left: 12.4%;
+      margin-top: 26%;
 
       left: 0;
       z-index: 1000;
@@ -304,16 +307,15 @@
         <h2>nom nom now</h2>
       </div>
       <p id="details"> Click on a point to see the details. Scroll down and click on filters below to narrow results.
-        Drag the person into the map to set a location.
+        Drag the person into the map to set a location. Hover over the "?" to view more about the scatter plot.
       </p>
       <div id="scatterplot-container">
         <svg id="scatterplot"></svg>
       </div>
+      <img id="question" src="data/imgs/question.png" alt="pointer">
     </div>
     <div id="map"></div>
     <div id="tooltip" class="tooltip"></div>
-
-    <img id="question" src="data/imgs/question.png" alt="pointer">
   </div>
 
   <!-- TODO: PLACE LEGEND SVG HERE! -->
