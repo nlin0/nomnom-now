@@ -338,6 +338,7 @@
   </div>
 
   <!-- TODO: PLACE LEGEND SVG HERE! -->
+  <!--<svg id="scatterplot-legend" width="500" height="100"></svg> -->
 
 
   <div class="button-list">
@@ -726,6 +727,67 @@
         .style("fill", "black")
         .style("font-size", "14px")
         .text("Distance (miles)");
+
+        var legendSvg = d3.select("#scatterplot-legend");  // This is your new legend SVG
+
+  const legendWidth = 200;
+  const legendHeight = 10;
+  const scaleFactor = 0.75;
+  var startX = 10;
+  var startY = 100;
+
+  // Define the gradient for the color scale in the new SVG
+  const legend = legendSvg.append("g")
+      .attr("class", "legend")
+      .attr("transform", "translate(" + (width - legendWidth - 10) + "," + 25 + ")")
+      .attr("transform", "scale("+ scaleFactor+")");
+
+  const gradient = legend.append("defs")
+      .append("linearGradient")
+      .attr("id", "gradient")
+      .attr("x1", "0%")
+      .attr("y1", "0%")
+      .attr("x2", "100%")
+      .attr("y2", "0%");
+
+  gradient.append("stop")
+      .attr("offset", "0%")
+      .attr("stop-color", "orange");
+
+  gradient.append("stop")
+      .attr("offset", "100%")
+      .attr("stop-color", "green");
+
+// Add the gradient bar
+  legend.append("rect")
+      .attr("width", legendWidth)
+      .attr("height", legendHeight)
+      .attr("transform", "translate("+225+"," + (legendHeight+10) + ")")
+      .style("fill", "url(#gradient)");
+
+  // Add the legend axis
+  const legendScale = d3.scaleLinear()
+      .domain([3, 5])
+      .range([0, legendWidth]);
+
+  const legendAxis = d3.axisBottom(legendScale)
+    .ticks(5)
+    .tickSize(10);
+
+  legend.append("g")
+    .attr("transform", "translate("+225+"," + (legendHeight+20) + ")")
+    .call(legendAxis);
+
+  // Add a label for the legend
+  legend.append("text")
+    .attr("x", 275 + legendWidth / 2)
+    .attr("y", 10)
+    .attr("text-anchor", "middle")
+    .text("Reviewer's Rating");
+
+
+
+
 
       const points = svg.selectAll("circle")
         .data(data)
