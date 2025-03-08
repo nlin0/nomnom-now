@@ -195,7 +195,11 @@
     }
 
     #scatterplot-container {
-      width: 450px;
+      margin-right: 0px;
+      padding-right: 0px;
+      padding-left: 0px;
+
+      width: 350px;
       height: 400px;
       display: flex;
       justify-content: center;
@@ -204,7 +208,9 @@
 
     #scatterplot {
       margin-top: 50px;
-      width: 100%;
+      /* margin-left: 40px; */
+      margin-left: -30px;
+      width: 150%;
       padding: 0px;
       height: 100%;
     }
@@ -264,6 +270,18 @@
       z-index: 1000;
     }
 
+    .y-axis-txt {
+      position: relative;
+      font-size: 14px;
+      transform: rotate(-90deg);
+      transform-origin: left bottom;
+      white-space: nowrap;
+      margin: 0px;
+      padding: 0px;
+      left: 8%;
+      top: 13.8%;
+    }
+
     #details {
       background-color: #ffffff7b;
       margin-top: 30px;
@@ -310,6 +328,7 @@
         Drag the person into the map to set a location. Hover over the "?" to view more about the scatter plot.
       </p>
       <div id="scatterplot-container">
+        <p class="y-axis-txt">Rating Score</p>
         <svg id="scatterplot"></svg>
       </div>
       <img id="question" src="data/imgs/question.png" alt="pointer">
@@ -672,7 +691,7 @@
     // LE SCATTERPLOT
     function createScatterPlot(data) {
       const container = document.getElementById("scatterplot-container");
-      const width = container.clientWidth - 40;
+      const width = container.clientWidth + 80;
       const height = container.clientHeight - 30;
 
       d3.select("#scatterplot").selectAll("*").remove();
@@ -702,10 +721,10 @@
         .domain([3, 5])
         .range(["orange", "green"]);
       svg.append("text")
-        .attr("transform", "translate(" + (width/2-20) + "," + (height) + ")")
+        .attr("transform", "translate(" + (width / 2 - 20) + "," + (height) + ")")
         .style("text-anchor", "middle")
-        .style("fill", "black")  // Add a color to the text
-        .style("font-size", "14px") // Set font size
+        .style("fill", "black")
+        .style("font-size", "14px")
         .text("Distance (miles)");
 
       const points = svg.selectAll("circle")
@@ -713,9 +732,9 @@
         .enter().append("circle")
         .attr("cx", d => x(d.distance))
         .attr("cy", d => y(d.ourScore))
-        .attr("r", 3)
+        .attr("r", 4)
         .attr("fill", d => colorScale(d.rating))
-        .attr("opacity", 0.6)
+        .attr("opacity", 0.4)
         .attr("name", d => d.name);
 
       // BRUSH function
