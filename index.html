@@ -710,7 +710,6 @@
         .domain([2.95, d3.max(data, d => d.ourScore)])
         .range([height - 30, 0]);
 
-      // Add class names to axes for easy selection later
       svg.append("g")
         .attr("class", "x-axis")
         .attr("transform", `translate(0,${height - 30})`)
