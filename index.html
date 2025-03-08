@@ -210,7 +210,7 @@
       margin-top: 50px;
       /* margin-left: 40px; */
       margin-left: -30px;
-      width: 150%;
+      width: 94%;
       padding: 0px;
       height: 100%;
     }
@@ -337,7 +337,7 @@
     <div id="tooltip" class="tooltip"></div>
   </div>
 
-  <!-- TODO: PLACE LEGEND SVG HERE! -->
+  <!-- <svg id="scatterplot-legend" width="500" height="100"></svg> -->
 
 
   <div class="button-list">
@@ -691,7 +691,7 @@
     // LE SCATTERPLOT
     function createScatterPlot(data) {
       const container = document.getElementById("scatterplot-container");
-      const width = container.clientWidth + 30;
+      const width = container.clientWidth + 10;
       const height = container.clientHeight - 30;
 
       d3.select("#scatterplot").selectAll("*").remove();
@@ -704,22 +704,26 @@
 
       const x = d3.scaleLinear()
         .domain([0, d3.max(data, d => parseFloat(d.distance))])
-        .range([0, width - 60]);
+        .range([0, width - 90]);
 
       const y = d3.scaleLinear()
         .domain([2.95, d3.max(data, d => d.ourScore)])
         .range([height - 30, 0]);
 
+      // Add class names to axes for easy selection later
       svg.append("g")
+        .attr("class", "x-axis")
         .attr("transform", `translate(0,${height - 30})`)
         .call(d3.axisBottom(x).ticks(4));
 
       svg.append("g")
+        .attr("class", "y-axis")
         .call(d3.axisLeft(y).ticks(4));
 
       const colorScale = d3.scaleLinear()
         .domain([3, 5])
         .range(["orange", "green"]);
+
       svg.append("text")
         .attr("transform", "translate(" + (width / 2 - 20) + "," + (height) + ")")
         .style("text-anchor", "middle")
@@ -727,21 +731,20 @@
         .style("font-size", "14px")
         .text("Distance (miles)");
 
-      const points = svg.selectAll("circle")
-        .data(data)
-        .enter().append("circle")
-        .attr("cx", d => x(d.distance))
-        .attr("cy", d => y(d.ourScore))
+      const points = svg.selectAll("circle").data(data, d => d.name);
+
+      points.enter()
+        .append("circle")
         .attr("r", 4)
         .attr("fill", d => colorScale(d.rating))
         .attr("opacity", 0.4)
-        .attr("name", d => d.name);
+        .attr("cx", d => x(d.distance))
+        .attr("cy", d => y(d.ourScore));
 
       // BRUSH function
       const brush = d3.brush()
         .extent([[0, 0], [width - 60, height - 30]])
         .on("end", function (event) {
-
           if (!event.selection) {
             points.attr("fill", d => colorScale(d.rating));
             resetMapMarkers();
@@ -777,6 +780,64 @@
         .call(brush);
     }
 
+    // SCATTER ANIMATION
+    function updateScatterPlot(data) {
+      const container = document.getElementById("scatterplot-container");
+      const width = container.clientWidth + 10;
+      const height = container.clientHeight - 30;
+
+      const svg = d3.select("#scatterplot g");
+
+      const x = d3.scaleLinear()
+        .domain([0, d3.max(data, d => parseFloat(d.distance))])
+        .range([0, width - 90]);
+
+      const y = d3.scaleLinear()
+        .domain([2.95, d3.max(data, d => d.ourScore)])
+        .range([height - 30, 0]);
+
+      svg.select(".x-axis")
+        .transition()
+        .duration(1000)
+        .call(d3.axisBottom(x).ticks(4));
+
+      svg.select(".y-axis")
+        .transition()
+        .duration(1000)
+        .call(d3.axisLeft(y).ticks(4));
+
+      const colorScale = d3.scaleLinear()
+        .domain([3, 5])
+        .range(["orange", "green"]);
+
+      const points = svg.selectAll("circle")
+        .data(data, d => d.name);
+
+      points.enter()
+        .append("circle")
+        .attr("r", 4)
+        .attr("fill", d => colorScale(d.rating))
+        .attr("opacity", 0)
+        .attr("cx", d => x(d.distance))
+        .attr("cy", d => y(d.ourScore))
+        .transition()
+        .duration(1500)
+        .attr("opacity", 0.4);
+
+      points.transition()
+        .duration(800)
+        .attr("cx", d => x(d.distance))
+        .attr("cy", d => y(d.ourScore))
+        .attr("fill", d => colorScale(d.rating))
+        .attr("opacity", 0.4);
+
+      points.exit()
+        .transition()
+        .duration(500)
+        .attr("opacity", 0)
+        .remove();
+    }
+
     // map markers
     function updateMapMarkers(selectedPoints) {
       mapMarkers.forEach(({ marker, originalData }) => {
@@ -801,13 +862,14 @@
     }
 
     async function user_actions(click_info) {
-      try {
-        const distance_json = await loadAndCalculateDistances(click_info[0], click_info[1]);
+      const distance_json = await loadAndCalculateDistances(click_info[0], click_info[1]);
+      if (d3.select("#scatterplot g").empty()) {
         createScatterPlot(distance_json);
-      } catch (error) {
-        console.error("Error:", error);
+      } else {
+        updateScatterPlot(distance_json);
       }
     }
+
     function haversine(lat1, lon1, lat2, lon2) {
       const R = 6371;
       const dLat = (lat2 - lat1) * Math.PI / 180;
