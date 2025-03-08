@@ -247,7 +247,7 @@
       height: 25px;
       margin: 0px;
       cursor: pointer;
-      margin-left: 94%;
+      margin-left: 90%;
     }
 
     .scatter-descr {
@@ -292,6 +292,7 @@
     #scatterplot-legend {
       margin: 0px;
       padding: 0px;
+      margin-left: 10%;
     }
 
     @media (max-width: 1150px) {
@@ -343,8 +344,6 @@
     <div id="map"></div>
     <div id="tooltip" class="tooltip"></div>
   </div>
-
-  <!-- TODO: PLACE LEGEND SVG HERE! -->
 
 
   <div class="button-list">
@@ -745,7 +744,7 @@
         .attr("cy", d => y(d.ourScore))
         .attr("r", 0)
         .attr("fill", d => colorScale(d.rating))
-        .attr("opacity", 0) 
+        .attr("opacity", 0)
         .attr("name", d => d.name);
 
 
@@ -792,6 +791,84 @@
         .attr("class", "brush")
         .call(brush);
     }
+
+    function createLegend() {
+      // Clear any existing legend
+      d3.select("#scatterplot-legend").selectAll("*").remove();
+
+      const legendSvg = d3.select("#scatterplot-legend");
+      const width = legendSvg.attr("width");
+      const height = legendSvg.attr("height");
+
+      // Create a color scale similar to the one in the scatter plot
+      const colorScale = d3.scaleLinear()
+        .domain([3, 5])
+        .range(["orange", "green"]);
+
+      // Create a continuous gradient legend
+      const defs = legendSvg.append("defs");
+
+      // Create linear gradient
+      const gradient = defs.append("linearGradient")
+        .attr("id", "rating-gradient")
+        .attr("x1", "0%")
+        .attr("y1", "0%")
+        .attr("x2", "100%")
+        .attr("y2", "0%");
+
+      // Add the color stops
+      gradient.append("stop")
+        .attr("offset", "0%")
+        .attr("stop-color", colorScale(3));
+
+      gradient.append("stop")
+        .attr("offset", "100%")
+        .attr("stop-color", colorScale(5));
+
+      // Main legend group
+      const legend = legendSvg.append("g")
+        .attr("transform", `translate(20, 20)`);
+
+      legend.append("text")
+        .attr("x", 0)
+        .attr("y", 0)
+        .text("Actual Ratings");
+
+      legend.append("rect")
+        .attr("x", 0)
+        .attr("y", 10)
+        .attr("width", width - 60)
+        .attr("height", 15)
+        .style("fill", "url(#rating-gradient)");
+
+      const legendScale = d3.scaleLinear()
+        .domain([3, 5])
+        .range([0, width - 60]);
+
+      const legendAxis = d3.axisBottom(legendScale)
+        .tickValues([3, 3.5, 4, 4.5, 5])
+        .tickFormat(d => d.toFixed(1));
+
+      legend.append("g")
+        .attr("transform", `translate(0, 25)`)
+        .call(legendAxis);
+
+      legend.append("circle")
+        .attr("cx", 10)
+        .attr("cy", 55)
+        .attr("r", 6)
+        .attr("fill", "#A62639");
+
+      legend.append("text")
+        .attr("x", 25)
+        .attr("y", 59)
+        .attr("font-size", "12px")
+        .text("Selected points (brush selection)");
+
+    }
+
+
+    createLegend();
 
     // Update function with smooth animations
     function updateScatterPlot(data) {
