@@ -289,6 +289,10 @@
       padding: 30px;
     }
 
+    #scatterplot-legend {
+      margin: 0px;
+      padding: 0px;
+    }
 
     @media (max-width: 1150px) {
       .nom-nom {
@@ -315,7 +319,8 @@
       would have a lower score than a 5-star rating with 600 reviews.
     </p>
     <p>The x-axis is the distance calculated from where the character icon is standing on the map.
-      Drag/brush across the the scatter plot to highlight those places.
+      Drag/brush across the the scatter plot to highlight those places. The color
+      of the points represent the actual rating of the restaurant.
     </p>
   </div>
 
@@ -327,6 +332,8 @@
       <p id="details"> Click on a point to see the details. Scroll down and click on filters below to narrow results.
         Drag the person into the map to set a location. Hover over the "?" to view more about the scatter plot.
       </p>
+
+      <svg id="scatterplot-legend" width="300" height="100"></svg>
       <div id="scatterplot-container">
         <p class="y-axis-txt">Rating Score</p>
         <svg id="scatterplot"></svg>
@@ -338,7 +345,6 @@
   </div>
 
   <!-- TODO: PLACE LEGEND SVG HERE! -->
-  <!--<svg id="scatterplot-legend" width="500" height="100"></svg> -->
 
 
   <div class="button-list">
@@ -388,6 +394,8 @@
     const fillColor = "#A5CCD1"; // put here for easy cusomization.. for leaflet point fills
     const mapMarkers = [];
     let selectedMarker = null;
+    let selectedPoints = new Set(); // Store selected points globally
+    let brushExtent = null;
 
     const load_map = async function () {
       const yelpData = await d3.csv("data/yelp_boston.csv");
@@ -635,7 +643,6 @@
       }
     });
 
-    // Handle drop event
     document.addEventListener("mouseup", function (event) {
       if (isDragging) {
         isDragging = false;
@@ -692,7 +699,7 @@
     // LE SCATTERPLOT
     function createScatterPlot(data) {
       const container = document.getElementById("scatterplot-container");
-      const width = container.clientWidth + 10;
+      const width = container.clientWidth + 30;
       const height = container.clientHeight - 30;
 
       d3.select("#scatterplot").selectAll("*").remove();
@@ -705,7 +712,7 @@
 
       const x = d3.scaleLinear()
         .domain([0, d3.max(data, d => parseFloat(d.distance))])
-        .range([0, width - 90]);
+        .range([0, width - 60]);
 
       const y = d3.scaleLinear()
         .domain([2.95, d3.max(data, d => d.ourScore)])
@@ -731,76 +738,21 @@
         .style("font-size", "14px")
         .text("Distance (miles)");
 
-      var legendSvg = d3.select("#scatterplot-legend");  // This is your new legend SVG
-
-      const legendWidth = 200;
-      const legendHeight = 10;
-      const scaleFactor = 0.75;
-      var startX = 10;
-      var startY = 100;
-
-      // Define the gradient for the color scale in the new SVG
-      const legend = legendSvg.append("g")
-        .attr("class", "legend")
-        .attr("transform", "translate(" + (width - legendWidth - 10) + "," + 25 + ")")
-        .attr("transform", "scale(" + scaleFactor + ")");
-
-      const gradient = legend.append("defs")
-        .append("linearGradient")
-        .attr("id", "gradient")
-        .attr("x1", "0%")
-        .attr("y1", "0%")
-        .attr("x2", "100%")
-        .attr("y2", "0%");
-
-      gradient.append("stop")
-        .attr("offset", "0%")
-        .attr("stop-color", "orange");
-
-      gradient.append("stop")
-        .attr("offset", "100%")
-        .attr("stop-color", "green");
-
-      // Add the gradient bar
-      legend.append("rect")
-        .attr("width", legendWidth)
-        .attr("height", legendHeight)
-        .attr("transform", "translate(" + 225 + "," + (legendHeight + 10) + ")")
-        .style("fill", "url(#gradient)");
-
-      // Add the legend axis
-      const legendScale = d3.scaleLinear()
-        .domain([3, 5])
-        .range([0, legendWidth]);
-
-      const legendAxis = d3.axisBottom(legendScale)
-        .ticks(5)
-        .tickSize(10);
-
-      legend.append("g")
-        .attr("transform", "translate(" + 225 + "," + (legendHeight + 20) + ")")
-        .call(legendAxis);
-
-      // Add a label for the legend
-      legend.append("text")
-        .attr("x", 275 + legendWidth / 2)
-        .attr("y", 10)
-        .attr("text-anchor", "middle")
-        .text("Reviewer's Rating");
-
-
-
-
-
-      const points = svg.selectAll("circle").data(data, d => d.name);
-
-      points.enter()
-        .append("circle")
-        .attr("r", 4)
-        .attr("fill", d => colorScale(d.rating))
-        .attr("opacity", 0.4)
+      const points = svg.selectAll("circle")
+        .data(data, d => d.name)
+        .enter().append("circle")
         .attr("cx", d => x(d.distance))
-        .attr("cy", d => y(d.ourScore));
+        .attr("cy", d => y(d.ourScore))
+        .attr("r", 0)
+        .attr("fill", d => colorScale(d.rating))
+        .attr("opacity", 0) 
+        .attr("name", d => d.name);
+
+
+      points.transition()
+        .duration(1500)
+        .attr("r", 4)
+        .attr("opacity", 0.4);
 
       // BRUSH function
       const brush = d3.brush()
@@ -828,7 +780,7 @@
 
           updateMapMarkers(selectedPoints);
 
-          // Clicking anywhere resets everything
+          // click reset
           svg.on("click", () => {
             points.attr("fill", d => colorScale(d.rating));
             resetMapMarkers();
@@ -841,18 +793,23 @@
         .call(brush);
     }
 
-    // SCATTER ANIMATION
+    // Update function with smooth animations
     function updateScatterPlot(data) {
       const container = document.getElementById("scatterplot-container");
-      const width = container.clientWidth + 10;
+      const width = container.clientWidth + 30;
       const height = container.clientHeight - 30;
+
+      // If no scatter plot exists yet, create it
+      if (d3.select("#scatterplot g").empty()) {
+        createScatterPlot(data);
+        return;
+      }
 
       const svg = d3.select("#scatterplot g");
 
       const x = d3.scaleLinear()
         .domain([0, d3.max(data, d => parseFloat(d.distance))])
-        .range([0, width - 90]);
-
+        .range([0, width - 60]);
       const y = d3.scaleLinear()
         .domain([2.95, d3.max(data, d => d.ourScore)])
         .range([height - 30, 0]);
@@ -861,7 +818,6 @@
         .transition()
         .duration(1000)
         .call(d3.axisBottom(x).ticks(4));
-
       svg.select(".y-axis")
         .transition()
         .duration(1000)
@@ -874,29 +830,81 @@
       const points = svg.selectAll("circle")
         .data(data, d => d.name);
 
+      // ENTER
       points.enter()
         .append("circle")
-        .attr("r", 4)
-        .attr("fill", d => colorScale(d.rating))
-        .attr("opacity", 0)
+        .attr("r", 0)
         .attr("cx", d => x(d.distance))
         .attr("cy", d => y(d.ourScore))
+        .attr("fill", d => colorScale(d.rating))
+        .attr("opacity", 0)
+        .attr("name", d => d.name)
         .transition()
         .duration(1800)
+        .attr("r", 4)
         .attr("opacity", 0.4);
 
+      // UPDATE ANIMATION
       points.transition()
         .duration(800)
         .attr("cx", d => x(d.distance))
         .attr("cy", d => y(d.ourScore))
         .attr("fill", d => colorScale(d.rating))
-        .attr("opacity", 0.4);
+        .attr("opacity", 0.4)
+        .attr("r", 4);
 
+      // EXIT ANiMATION
       points.exit()
         .transition()
         .duration(500)
         .attr("opacity", 0)
+        .attr("r", 0)
         .remove();
+
+      // BRUSH FUNCTIONALITY
+      const brush = d3.brush()
+        .extent([[0, 0], [width - 60, height - 30]])
+        .on("end", function (event) {
+          if (!event.selection) {
+            svg.selectAll("circle").attr("fill", d => colorScale(d.rating));
+            resetMapMarkers();
+            return;
+          }
+
+          const [[x0, y0], [x1, y1]] = event.selection;
+          const selectedPoints = new Set();
+
+          svg.selectAll("circle").attr("fill", function (d) {
+            const isSelected = x(d.distance) >= x0 && x(d.distance) <= x1 &&
+              y(d.ourScore) >= y0 && y(d.ourScore) <= y1;
+
+            if (isSelected) {
+              selectedPoints.add(d.name);
+            }
+
+            return isSelected ? "#A62639" : colorScale(d.rating);
+          });
+
+          updateMapMarkers(selectedPoints);
+        });
+
+      if (svg.select(".brush").empty()) {
+        svg.append("g")
+          .attr("class", "brush")
+          .call(brush);
+      } else {
+        // Update brush extent if it exists
+        svg.select(".brush").call(brush);
+      }
+    }
+
+    async function user_actions(click_info) {
+      const distance_json = await loadAndCalculateDistances(click_info[0], click_info[1]);
+      if (d3.select("#scatterplot g").empty()) {
+        createScatterPlot(distance_json);
+      } else {
+        updateScatterPlot(distance_json);
+      }
     }
 
     // map markers
@@ -922,14 +930,14 @@
       });
     }
 
-    async function user_actions(click_info) {
-      const distance_json = await loadAndCalculateDistances(click_info[0], click_info[1]);
-      if (d3.select("#scatterplot g").empty()) {
-        createScatterPlot(distance_json);
-      } else {
-        updateScatterPlot(distance_json);
-      }
-    }
+    // async function user_actions(click_info) {
+    //   try {
+    //     const distance_json = await loadAndCalculateDistances(click_info[0], click_info[1]);
+    //     createScatterPlot(distance_json);
+    //   } catch (error) {
+    //     console.error("Error:", error);
+    //   }
+    // }
 
     function haversine(lat1, lon1, lat2, lon2) {
       const R = 6371;
