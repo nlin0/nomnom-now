@@ -1,57 +1,994 @@
-// SCATTER ANIMATION
-    function updateScatterPlot(data) {
+
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>Nom Nom Now!</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="https://d3js.org/topojson.v3.min.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css">
+  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+
+  <style>
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+      width: 100%;
+    }
+
+    #background-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100px;
+      background-color: #A0B9BF;
+      z-index: -1;
+    }
+
+    #map {
+      margin: 0px;
+      /*  vh = 98% of viewport */
+      height: 94.8vh;
+      width: 55%;
+      float: right;
+    }
+
+    #description {
+      width: 30%;
+      height: 100%;
+      float: left;
+      padding: 20px;
+      box-sizing: border-box;
+      overflow-y: auto;
+    }
+
+    .nom-nom {
+      font-size: 24px;
+      text-transform: uppercase;
+      margin-top: -42px;
+      text-align: center;
+      color: white;
+      padding: 20px;
+      margin-bottom: 0px;
+      padding-bottom: 3px;
+      transform: scaleY(3);
+    }
+
+    .section {
+      margin: 0;
+      margin-right: -5%;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      gap: 5%;
+      height: 94.8vh;
+    }
+
+    .tooltip {
+      position: absolute;
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 8px;
+      border-radius: 5px;
+      font-size: 14px;
+      display: none;
+      z-index: 1000;
+    }
+
+    .descr-star {
+      margin: 0px;
+      padding: 0px;
+      margin-bottom: -2px;
+    }
+
+    .descr-box {
+      background-color: #accbd24f;
+      padding: 30px;
+      margin: 0px;
+    }
+
+    .chat-bubble {
+      /* background: #42a5f5; */
+      margin-top: 0px;
+
+      background: #A0B9BF;
+      color: #fff;
+      border-radius: 20px 20px 2px 20px;
+      display: block;
+      width: 99%;
+      padding: 7px 13px;
+      margin-top: 10px;
+    }
+
+    .card-body {
+      margin-top: 0px;
+      flex: 1 1 auto;
+      padding: 5px 5px;
+    }
+
+    .tags-header {
+      font-size: 16px;
+      margin: 5px;
+      margin-top: 30px;
+
+    }
+
+    .tags {
+      font-size: 12px;
+      display: flex;
+      flex-direction: row;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .tag {
+      display: flex;
+      background-color: rgb(133, 166, 179);
+      font-size: 16px;
+      color: rgb(255, 255, 255);
+
+      padding: 3px;
+      padding-left: 10px;
+      padding-right: 10px;
+      justify-content: center;
+      align-items: center;
+      width: 80px;
+      height: 30px;
+
+      font-size: 12px;
+      text-align: center;
+      /* border-radius: 30px; */
+    }
+
+    .tag-p {
+      margin: 0px;
+      padding: 0px;
+    }
+
+    .restaurant {
+      text-transform: uppercase;
+      text-align: center;
+    }
+
+    .filter-button {
+      padding: 10px;
+      padding-top: 20px;
+      padding-bottom: 20px;
+      background-color: rgb(133, 166, 179);
+      color: white;
+      border: none;
+      cursor: pointer;
+      flex: 1 1 100px;
+      text-align: center;
+      width: 50px;
+      font-size: 10px;
+      transition: all 0.3s ease;
+      z-index: 1;
+    }
+
+    .filter-button:hover {
+      background-color: #A0B9BF;
+      transform: scale(1.1);
+      font-size: 14px;
+      width: 70px;
+      z-index: 100;
+    }
+
+    .filter-button.active {
+      background-color: #EDD9A3;
+      color: black;
+    }
+
+    .button-list {
+      display: flex;
+      justify-content: center;
+    }
+
+    .filter-buttons {
+      display: flex;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      width: 200%;
+      margin-bottom: 10px;
+    }
+
+    #scatterplot-container {
+      margin-right: 0px;
+      padding-right: 0px;
+      padding-left: 0px;
+
+      width: 350px;
+      height: 400px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #scatterplot {
+      margin-top: 50px;
+      /* margin-left: 40px; */
+      margin-left: -30px;
+      width: 150%;
+      padding: 0px;
+      height: 100%;
+    }
+
+    #draggable {
+      padding: 0px;
+      margin: 0px;
+      margin-top: 30px;
+      /* margin-left: 40px; */
+      position: absolute;
+      cursor: grab;
+      width: 50px;
+      height: 50px;
+      z-index: 1000;
+    }
+
+    .speech-bubble {
+      position: absolute;
+      background-color: #EDD9A3;
+      width: 80px;
+      text-align: center;
+      padding: 5px;
+      margin: 5px;
+      text-transform: lowercase;
+      font-size: 10px;
+    }
+
+    .drag-section {
+      margin-left: 40px;
+    }
+
+    #question {
+      width: 25px;
+      height: 25px;
+      margin: 0px;
+      cursor: pointer;
+      margin-left: 94%;
+    }
+
+    .scatter-descr {
+      display: none;
+      opacity: 0;
+      transition: opacity 0.2s ease-in-out;
+      position: absolute;
+      background: rgba(47, 68, 78, 0.744);
+      color: white;
+      padding: 10px;
+      border-radius: 5px;
+      font-size: 12px;
+      width: 250px;
+      top: 30px;
+
+      margin-left: 12.4%;
+      margin-top: 26%;
+
+      left: 0;
+      z-index: 1000;
+    }
+
+    .y-axis-txt {
+      position: relative;
+      font-size: 14px;
+      transform: rotate(-90deg);
+      transform-origin: left bottom;
+      white-space: nowrap;
+      margin: 0px;
+      padding: 0px;
+      left: 10%;
+      top: 12.8%;
+    }
+
+    #details {
+      background-color: #ffffff7b;
+      margin-top: 30px;
+      margin-bottom: 30px;
+      padding: 30px;
+    }
+
+    #brushed-ranges {
+      position: fixed;
+      top: 10px;         
+      right: 10px;      
+      background-color: rgba(255, 255, 255, 0.8); 
+      padding: 10px;     
+      border-radius: 5px; 
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+      z-index: 1000;
+    }
+
+    #brushed-x-range, #brushed-y-range {
+      margin: 0;
+      font-size: 14px;   
+      font-family: Arial, sans-serif;  
+      color: #333;       
+    }
+
+
+
+    @media (max-width: 1150px) {
+      .nom-nom {
+        font-size: 16px;
+        margin-top: 0px;
+        margin-top: -13px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- <svg id="choropleth" width="690" height="470" style="margin:20px"></svg> -->
+
+  <div id="background-container"></div>
+  <div class="drag-section">
+    <div class="speech-bubble">Drop me on the map!</div>
+    <img id="draggable" src="data/imgs/people.png" alt="pointer">
+  </div>
+
+  <div class="scatter-descr">
+    <p>The ratings have been normalized such that points with less review counts
+      have less weight than those with higher review counts. So a 5-star rating with 10 reviews
+      would have a lower score than a 5-star rating with 600 reviews.
+    </p>
+    <p>The x-axis is the distance calculated from where the character icon is standing on the map.
+      Drag/brush across the the scatter plot to highlight those places.
+    </p>
+  </div>
+
+  <div class="section">
+    <div class="descr-box" id="description">
+      <div class="nom-nom">
+        <h2>nom nom now</h2>
+      </div>
+      <p id="details"> Click on a point to see the details. Scroll down and click on filters below to narrow results.
+        Drag the person into the map to set a location. Hover over the "?" to view more about the scatter plot.
+      </p>
+      <div id="scatterplot-container">
+        <p class="y-axis-txt">Rating Score</p>
+        <svg id="scatterplot"></svg>
+      </div>
+      <img id="question" src="data/imgs/question.png" alt="pointer">
+    </div>
+    <div id="map"></div>
+    <div id="tooltip" class="tooltip"></div>
+    
+  </div>
+  
+  <div id="brushed-ranges">
+    <p id="brushed-x-range"></p>
+    <p id="brushed-y-range"></p>
+  </div>
+
+  
+
+  <!-- TODO: PLACE LEGEND SVG HERE! -->
+  <!--<svg id="scatterplot-legend" width="500" height="100"></svg> -->
+
+
+  <div class="button-list">
+    <div class="filter-buttons" id="filter-buttons"></div>
+  </div>
+
+  <script>
+    ////// HOVER BUTTON FUCNTIONALITY
+    document.addEventListener("DOMContentLoaded", function () {
+      const questionIcon = document.getElementById("question");
+      const scatterDescr = document.querySelector(".scatter-descr");
+
+      questionIcon.addEventListener("mouseover", function () {
+        scatterDescr.style.display = "block";
+        scatterDescr.style.opacity = "1";
+      });
+
+      questionIcon.addEventListener("mouseout", function () {
+        scatterDescr.style.opacity = "0";
+        setTimeout(() => {
+          scatterDescr.style.display = "none";
+        }, 200);
+      });
+    });
+
+    const accessToken = 'pk.eyJ1IjoibmpsNTUiLCJhIjoiY203eHF2cTZzMDF6NDJycHk2NHRsMTBlOCJ9.YsiJ8vNV_ct2Ml_f1hAFLg';
+    const styleId = 'mapbox/light-v10'; // api style.. added here also for customization conv
+
+    const map = L.map('map', {
+      center: [42.3601, -71.0589],
+      zoom: 13,
+      maxBounds: [
+        [42.2800, -71.2000],
+        [42.4500, -70.9500]
+      ],
+      maxZoom: 18,
+      minZoom: 13
+    });
+
+    L.tileLayer(`https://api.mapbox.com/styles/v1/${styleId}/tiles/{z}/{x}/{y}?access_token={accessToken}`, {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://www.mapbox.com/">Mapbox</a>',
+      tileSize: 512,
+      zoomOffset: -1,
+      accessToken: accessToken
+    }).addTo(map);
+
+    const fillColor = "#A5CCD1"; // put here for easy cusomization.. for leaflet point fills
+    const mapMarkers = [];
+    let selectedMarker = null;
+
+    const load_map = async function () {
+      const yelpData = await d3.csv("data/yelp_boston.csv");
+
+      generateFilterButtons(yelpData);
+      addAllButton();
+
+      yelpData.forEach(d => {
+        const marker = L.circleMarker([+d.latitude, +d.longitude], {
+          radius: 5,
+          fillColor: fillColor,
+          color: "black",
+          weight: 0.5,
+          opacity: 0.7,
+          fillOpacity: 0.7,
+        }).addTo(map)
+          .on("mouseover", function (event) {
+            this.setStyle({
+              fillColor: "yellow",
+              fillOpacity: 1
+            });
+            this._path.style.transition = "fill 0.3s ease";
+            this._path.classList.add("marker-hover");
+            animateRadius(this, 8);
+            showTooltip(event.originalEvent, d.name, d.rating, d.categories_json);
+          })
+          .on("mousemove", function (event) {
+            updateTooltipPosition(event.originalEvent);
+          })
+          .on("mouseout", function () {
+            if (!this.options.selected) {
+              this.setStyle({
+                fillColor: fillColor,
+                fillOpacity: 0.7
+              });
+              this._path.style.transition = "fill 0.3s ease";
+              this._path.classList.remove("marker-hover");
+              animateRadius(this, 5);
+            }
+            hideTooltip();
+          })
+          .on("click", function () {
+            mapMarkers.forEach(({ marker }) => {
+              marker.setStyle({
+                fillColor: fillColor,
+                fillOpacity: 0.7
+              });
+              marker.options.selected = false;
+              animateRadius(marker, 5);
+            });
+
+            this.setStyle({
+              fillColor: "yellow",
+              fillOpacity: 1
+            });
+            this.options.selected = true;
+            animateRadius(this, 8);
+
+            selectedMarker = this;
+
+            const address = parseAddress(d.location_json);
+            const categories = JSON.parse(d.categories_json).map(category => `<div class="tag"><p class="tag-p">${category[0]}</p></div>`).join('');
+            document.getElementById('details').innerHTML =
+              `
+                <div class="descr-box">
+                <h3 class="restaurant">${d.name}</h3>
+                <p>${d.rating} <img class="descr-star" src="data/imgs/star.png" alt="⭐" width="16" height="16">
+                based on ${d.review_count} reviews</p>
+                <p>Address: ${address}</p>
+                <div class="tags">
+                ${categories}
+                </div>
+                <div class="card-body">
+                <div class="chat-bubble">
+                <p>${d.snippet_text}</p>
+                </div>
+                </div>
+                </div>
+              `;
+            // selected_pnt(d.name);
+          });
+        mapMarkers.push({
+          marker,
+          category: d.search_category,
+          originalData: d
+        });
+      });
+    };
+
+
+    // bruteforce leaflet animation
+    function animateRadius(marker, newRadius) {
+      const duration = 200; // in milisecs
+      const startRadius = marker.options.radius;
+      const startTime = performance.now();
+
+      function animate(time) {
+        const elapsed = time - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const currentRadius = startRadius + (newRadius - startRadius) * progress;
+        marker.setStyle({ radius: currentRadius });
+
+        if (progress < 1) {
+          requestAnimationFrame(animate);
+        }
+      }
+
+      requestAnimationFrame(animate);
+    }
+
+    // map tooltips
+    function showTooltip(event, name, rating, categories) {
+      const tooltip = document.getElementById("tooltip");
+      let firstCategory = "";
+      const parsedCategories = JSON.parse(categories);
+      if (Array.isArray(parsedCategories) && parsedCategories.length > 0) {
+        firstCategory = parsedCategories[0][0];
+      }
+      const stars = generateStars(rating);
+      tooltip.innerHTML = `<strong>${name}</strong><br>${firstCategory}<br>${stars}`;
+      tooltip.style.display = "block";
+      updateTooltipPosition(event);
+    }
+
+    function updateTooltipPosition(event) {
+      const tooltip = document.getElementById("tooltip");
+      tooltip.style.left = event.pageX + 15 + "px";
+      tooltip.style.top = event.pageY - 10 + "px";
+    }
+
+    function hideTooltip() {
+      document.getElementById("tooltip").style.display = "none";
+    }
+
+    function parseAddress(locationJson) {
+      try {
+        const location = JSON.parse(locationJson);
+        const address = location.display_address.join(", ");
+        return address;
+      } catch (e) {
+        console.error("Error parsing address:", e);
+        return "Unknown address";
+      }
+    }
+
+    // stars
+    function generateStars(rating) {
+      const fullStars = Math.floor(rating);
+      const hasHalfStar = rating % 1 !== 0;
+      let starsHTML = "";
+
+      for (let i = 0; i < fullStars; i++) {
+        starsHTML += `<img src="data/imgs/star.png" alt="⭐" width="16" height="16"> `;
+      }
+      if (hasHalfStar) {
+        starsHTML += `<img src="data/imgs/hstar.png" alt="⭐️" width="16" height="16"> `;
+      }
+
+      return starsHTML;
+    }
+
+    // filter buttons
+    const selectedCategories = new Set();
+
+    function generateFilterButtons(data) {
+      const categories = new Set(data.map(d => d.search_category));
+      const filterButtonsContainer = document.getElementById('filter-buttons');
+      filterButtonsContainer.innerHTML = ""; // Clear previous buttons
+
+      categories.forEach(category => {
+        const button = document.createElement('button');
+        button.className = 'filter-button';
+        button.textContent = category;
+        button.onclick = () => toggleCategoryFilter(category);
+        filterButtonsContainer.appendChild(button);
+      });
+
+      addAllButton();
+    }
+
+    function addAllButton() {
+      const filterButtonsContainer = document.getElementById('filter-buttons');
+      if (!document.querySelector('.filter-button.clear')) {
+        const button = document.createElement('button');
+        button.className = 'filter-button clear';
+        button.textContent = 'CLEAR';
+        button.onclick = () => {
+          selectedCategories.clear();
+          updateFilterButtons();
+          filterMarkers();
+        };
+        filterButtonsContainer.appendChild(button);
+      }
+    }
+
+    function toggleCategoryFilter(category) {
+      if (selectedCategories.has(category)) {
+        selectedCategories.delete(category);
+      } else {
+        selectedCategories.add(category);
+      }
+      updateFilterButtons();
+      filterMarkers();
+    }
+
+    function updateFilterButtons() {
+      document.querySelectorAll('.filter-button').forEach(button => {
+        button.classList.toggle('active', selectedCategories.has(button.textContent));
+      });
+    }
+
+    function filterMarkers() {
+      mapMarkers.forEach(({ marker, category }) => {
+        if (selectedCategories.size === 0 || selectedCategories.has(category)) {
+          marker.addTo(map);
+        } else {
+          map.removeLayer(marker);
+        }
+      });
+    }
+
+    load_map();
+    // DRAGGABLE YAYAYAY!!
+    let isDragging = false;
+    let draggable = document.getElementById("draggable");
+    let droppedMarker = null; // Store the last marker
+
+    draggable.addEventListener("dragstart", (event) => {
+      event.preventDefault();
+    });
+
+    draggable.addEventListener("mousedown", function (event) {
+      isDragging = true;
+      draggable.style.cursor = "grabbing";
+      const speechBubble = document.querySelector(".speech-bubble");
+      if (speechBubble) {
+        speechBubble.style.display = "none";
+      }
+    });
+
+    document.addEventListener("mousemove", function (event) {
+      if (isDragging) {
+        draggable.style.left = event.pageX - 30 + "px";
+        draggable.style.top = event.pageY - 98 + "px";   // feet follow mouse
+      }
+    });
+
+    // Handle drop event
+    document.addEventListener("mouseup", function (event) {
+      if (isDragging) {
+        isDragging = false;
+        draggable.style.cursor = "grab";
+
+        const mapContainer = document.getElementById("map");
+        const rect = mapContainer.getBoundingClientRect();
+
+        if (
+          event.clientX > rect.left &&
+          event.clientX < rect.right &&
+          event.clientY > rect.top &&
+          event.clientY < rect.bottom
+        ) {
+          const x = event.clientX - rect.left;
+          const y = event.clientY - rect.top;
+          const latlng = map.containerPointToLatLng([x, y]);
+
+          // DEBUGGING: Log the lat/lng of the drop location
+          // console.log("Dropped at:", latlng);
+
+          if (droppedMarker) {
+            map.removeLayer(droppedMarker);
+          }
+
+          droppedMarker = L.marker([latlng.lat, latlng.lng], {
+            icon: L.icon({
+              iconUrl: 'data/imgs/people.png',
+              iconSize: [60, 65], // size of image CUSTOMIZE
+              iconAnchor: [30, 65],
+              popupAnchor: [0, -65]
+            })
+          }).addTo(map)
+            .bindPopup(`Dropped here:<br>Lat: ${latlng.lat.toFixed(5)}<br>Lng: ${latlng.lng.toFixed(5)}`)
+            .openPopup();
+
+          draggable.style.left = "42%";
+          draggable.style.top = "7%";
+
+          resetMapMarkers();
+
+          user_actions([latlng.lat, latlng.lng]);
+        } else {
+          if (speechBubble) {
+            speechBubble.style.display = "block";
+          }
+        }
+      }
+    });
+
+    draggable.style.width = "60px";
+    draggable.style.height = "65px";
+
+    // LE SCATTERPLOT
+    function createScatterPlot(data) {
       const container = document.getElementById("scatterplot-container");
-      const width = container.clientWidth + 10;
+      const width = container.clientWidth + 30;
       const height = container.clientHeight - 30;
 
-      const svg = d3.select("#scatterplot g");
+      d3.select("#scatterplot").selectAll("*").remove();
+
+      const svg = d3.select("#scatterplot")
+        .attr("width", width)
+        .attr("height", height)
+        .append("g")
+        .attr("transform", "translate(30,10)");
 
       const x = d3.scaleLinear()
         .domain([0, d3.max(data, d => parseFloat(d.distance))])
-        .range([0, width - 90]);
+        .range([0, width - 60]);
 
       const y = d3.scaleLinear()
         .domain([2.95, d3.max(data, d => d.ourScore)])
         .range([height - 30, 0]);
 
-      svg.select(".x-axis")
-        .transition()
-        .duration(1000)
+      svg.append("g")
+        .attr("transform", `translate(0,${height - 30})`)
         .call(d3.axisBottom(x).ticks(4));
 
-      svg.select(".y-axis")
-        .transition()
-        .duration(1000)
+      svg.append("g")
         .call(d3.axisLeft(y).ticks(4));
 
       const colorScale = d3.scaleLinear()
         .domain([3, 5])
         .range(["orange", "green"]);
+      svg.append("text")
+        .attr("transform", "translate(" + (width / 2 - 20) + "," + (height) + ")")
+        .style("text-anchor", "middle")
+        .style("fill", "black")
+        .style("font-size", "14px")
+        .text("Distance (miles)");
+
+        var legendSvg = d3.select("#scatterplot-legend");  // This is your new legend SVG
+
+  const legendWidth = 200;
+  const legendHeight = 10;
+  const scaleFactor = 0.75;
+  var startX = 10;
+  var startY = 100;
+
+  // Define the gradient for the color scale in the new SVG
+  const legend = legendSvg.append("g")
+      .attr("class", "legend")
+      .attr("transform", "translate(" + (width - legendWidth - 10) + "," + 25 + ")")
+      .attr("transform", "scale("+ scaleFactor+")");
+
+  const gradient = legend.append("defs")
+      .append("linearGradient")
+      .attr("id", "gradient")
+      .attr("x1", "0%")
+      .attr("y1", "0%")
+      .attr("x2", "100%")
+      .attr("y2", "0%");
+
+  gradient.append("stop")
+      .attr("offset", "0%")
+      .attr("stop-color", "orange");
+
+  gradient.append("stop")
+      .attr("offset", "100%")
+      .attr("stop-color", "green");
+
+// Add the gradient bar
+  legend.append("rect")
+      .attr("width", legendWidth)
+      .attr("height", legendHeight)
+      .attr("transform", "translate("+225+"," + (legendHeight+10) + ")")
+      .style("fill", "url(#gradient)");
+
+  // Add the legend axis
+  const legendScale = d3.scaleLinear()
+      .domain([3, 5])
+      .range([0, legendWidth]);
+
+  const legendAxis = d3.axisBottom(legendScale)
+    .ticks(5)
+    .tickSize(10);
+
+  legend.append("g")
+    .attr("transform", "translate("+225+"," + (legendHeight+20) + ")")
+    .call(legendAxis);
+
+  // Add a label for the legend
+  legend.append("text")
+    .attr("x", 275 + legendWidth / 2)
+    .attr("y", 10)
+    .attr("text-anchor", "middle")
+    .text("Reviewer's Rating");
+
+
+
+
 
       const points = svg.selectAll("circle")
-        .data(data, d => d.name);
-
-      points.enter()
-        .append("circle")
+        .data(data)
+        .enter().append("circle")
+        .attr("cx", d => x(d.distance))
+        .attr("cy", d => y(d.ourScore))
         .attr("r", 4)
         .attr("fill", d => colorScale(d.rating))
-        .attr("opacity", 0)
-        .attr("cx", d => x(d.distance))
-        .attr("cy", d => y(d.ourScore))
-        .transition()
-        .duration(1800)
-        .attr("opacity", 0.4);
+        .attr("opacity", 0.4)
+        .attr("name", d => d.name);
 
-      points.transition()
-        .duration(800)
-        .attr("cx", d => x(d.distance))
-        .attr("cy", d => y(d.ourScore))
-        .attr("fill", d => colorScale(d.rating))
-        .attr("opacity", 0.4);
 
-      points.exit()
-        .transition()
-        .duration(500)
-        .attr("opacity", 0)
-        .remove();
+        let brushedXRange = null;
+        let brushedYRange = null;
+
+        const brush = d3.brush()
+          .extent([[0, 0], [width - 60, height - 30]])
+          .on("end", function (event) {
+            if (!event.selection) {
+              points.attr("fill", d => colorScale(d.rating));
+              resetMapMarkers();
+
+              
+              brushedXRange = null;
+              brushedYRange = null;
+
+              
+              document.getElementById("brushed-x-range").textContent = "[]";
+              document.getElementById("brushed-y-range").textContent = "[]";
+
+              return;
+            }
+
+            const [[x0, y0], [x1, y1]] = event.selection;
+
+            
+            brushedXRange = [x.invert(x0), x.invert(x1)]; 
+            brushedYRange = [y.invert(y0), y.invert(y1)]; 
+
+            document.getElementById("brushed-x-range").textContent = 
+              "[" + brushedXRange[0].toFixed(2) + " miles, " + brushedXRange[1].toFixed(2) + " miles]";
+            document.getElementById("brushed-y-range").textContent = 
+              "[" + brushedYRange[1].toFixed(2) + " stars, " + brushedYRange[0].toFixed(2) + " stars]";
+
+            const selectedPoints = new Set();
+
+            points.attr("fill", function (d) {
+              const isSelected = x(d.distance) >= brushedXRange[0] && x(d.distance) <= brushedXRange[1] &&
+                y(d.ourScore) >= brushedYRange[0] && y(d.ourScore) <= brushedYRange[1];
+
+              if (isSelected) {
+                selectedPoints.add(d.name);
+              }
+
+              return isSelected ? "#A62639" : colorScale(d.rating);
+            });
+
+            updateMapMarkers(selectedPoints);
+
+            svg.on("click", () => {
+              points.attr("fill", d => colorScale(d.rating));
+              resetMapMarkers();
+              svg.select(".brush").call(brush.move, null);
+
+              brushedXRange = null;
+              brushedYRange = null;
+
+              document.getElementById("brushed-x-range").textContent = "Brushed x range (miles): []";
+              document.getElementById("brushed-y-range").textContent = "Brushed y range (stars): []";
+            });
+          });
+
+        svg.append("g")
+          .attr("class", "brush")
+          .call(brush);
+
+
+
+
+
     }
+
+    // map markers
+    function updateMapMarkers(selectedPoints) {
+      mapMarkers.forEach(({ marker, originalData }) => {
+        if (originalData && selectedPoints.has(originalData.name)) {
+          marker.setStyle({ fillColor: "#ffc9c9", fillOpacity: 1 });
+          marker._path.style.transition = "fill 0.6s ease";
+        } else {
+          marker.setStyle({ fillColor: fillColor, fillOpacity: 0.7 });
+          marker._path.style.transition = "fill 0.s ease";
+        }
+      });
+    }
+
+    function resetMapMarkers() {
+      mapMarkers.forEach(({ marker, originalData }) => {
+        if (selectedMarker && marker === selectedMarker) {
+          marker.setStyle({ fillColor: "yellow", fillOpacity: 1 });
+        } else {
+          marker.setStyle({ fillColor: fillColor, fillOpacity: 0.7 });
+        }
+      });
+    }
+
+    async function user_actions(click_info) {
+      try {
+        const distance_json = await loadAndCalculateDistances(click_info[0], click_info[1]);
+        createScatterPlot(distance_json);
+      } catch (error) {
+        console.error("Error:", error);
+      }
+    }
+    function haversine(lat1, lon1, lat2, lon2) {
+      const R = 6371;
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+
+      const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c * 0.6214;
+    }
+
+    // function selected_pnt(name) {
+    //   d3.selectAll(".scatter-point")
+    //     .transition()
+    //     .duration(300)
+    //     .attr("fill", function (d) {
+    //       return d.name === name ? "black" : colorScale(d.rating);
+    //     })
+    //     .attr("r", function (d) {
+    //       return d.name === name ? 6 : 3;
+    //     });
+    // }
+
+    function loadAndCalculateDistances(lat, lon) {
+      return new Promise((resolve, reject) => {
+        d3.csv("data/yelp_boston.csv").then(function (data) {
+          let results = [];
+
+          data.forEach(function (restaurant) {
+            const restLat = parseFloat(restaurant.latitude);
+            const restLon = parseFloat(restaurant.longitude);
+            const reviewCount = parseInt(restaurant.review_count);
+            const rating = parseFloat(restaurant.rating);
+
+            const k = 3;
+            const ourScore = rating * reviewCount / (reviewCount + k);
+
+            const distance = haversine(lat, lon, restLat, restLon);
+
+            results.push({
+              name: restaurant.name,
+              distance: distance.toFixed(2),
+              ourScore: ourScore.toFixed(2),
+              rating: restaurant.rating,
+              originalData: restaurant
+            });
+          });
+
+          resolve(results);
+        });
+      });
+    }
+
+    user_actions([]);
+
+
+  </script>
+</body>
+
+</html>
