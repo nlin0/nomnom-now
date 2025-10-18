@@ -5,7 +5,7 @@
 
 ---
 
-## 🌟 Overview
+## Overview
 
 BostonNoms is an interactive data visualization web app built with **Leaflet.js**, **D3.js**, and **JavaScript**, designed to help users explore Boston restaurants through a data-driven and intuitive interface.
 
@@ -18,27 +18,7 @@ BostonNoms empowers users to:
 
 ---
 
-## 🧩 Dataset
-
-The project uses the `yelp_boston.csv` dataset, containing:
-
-| Field | Description |
-|--------|--------------|
-| `name` | Restaurant name |
-| `url` | Yelp listing link |
-| `review_count` | Number of Yelp reviews |
-| `rating` | Average Yelp rating |
-| `categories_json` | JSON list of categories |
-| `snippet_text` | A short excerpt from a user review |
-| `latitude`, `longitude` | Geographic coordinates |
-| `neighborhood`, `city`, `postal_code` | Location metadata |
-
-The audience is users who want to **find hangout spots** based on proximity, cuisine, and review quality.
-
----
-
-
-## 🧭 How to Use
+## How to Use
 
 1. **Drag the Person Icon**  
    - Move the icon anywhere on the Boston map to set your desired location.  
@@ -62,6 +42,25 @@ The audience is users who want to **find hangout spots** based on proximity, cui
 
 ---
 
+## Dataset
+
+The project uses the `yelp_boston.csv` dataset, containing:
+
+| Field | Description |
+|--------|--------------|
+| `name` | Restaurant name |
+| `url` | Yelp listing link |
+| `review_count` | Number of Yelp reviews |
+| `rating` | Average Yelp rating |
+| `categories_json` | JSON list of categories |
+| `snippet_text` | A short excerpt from a user review |
+| `latitude`, `longitude` | Geographic coordinates |
+| `neighborhood`, `city`, `postal_code` | Location metadata |
+
+The audience is users who want to **find hangout spots** based on proximity, cuisine, and review quality.
+
+---
+
 ## Key Features
 
 ### Interactive Map (Leaflet.js + Mapbox API)
@@ -72,7 +71,7 @@ The audience is users who want to **find hangout spots** based on proximity, cui
 - Click: opens an information box with address, tags, and review snippet.
 - Map dynamically highlights restaurants selected in the scatterplot.
 
-###  Drag-and-Drop Personalization
+### Drag-and-Drop Personalization
 
 - A draggable **“person” icon** lets users drop their location anywhere on the map.  
 - The scatterplot automatically updates distances and recalculates restaurant rankings relative to that location.  
@@ -89,7 +88,7 @@ The audience is users who want to **find hangout spots** based on proximity, cui
 \[
 \text{Weighted Rating} = \frac{v}{v+k}R + \frac{k}{v+k}C
 \]
-where 
+where
 
 - *v* = number of reviews  
 - *R* = restaurant’s average rating  
@@ -122,7 +121,7 @@ This method stabilizes ratings and avoids overvaluing new or low-review restaura
 
 ---
 
-##  Development Challenges & Trade-offs
+## Development Challenges & Trade-offs
 
 - **Drag vs. Map Panning:** Implementing draggable icons conflicted with Leaflet’s built-in map drag. Solved by prioritizing icon placement before map movement.  
 - **Pin Accuracy:** Slight offsets occur when dropping the icon due to image size, but impact is minimal.  
@@ -131,7 +130,7 @@ This method stabilizes ratings and avoids overvaluing new or low-review restaura
 
 ---
 
-## 👩‍💻 Development Roles
+## Development Roles
 
 **Nicole Lin**
 
@@ -147,5 +146,4 @@ This method stabilizes ratings and avoids overvaluing new or low-review restaura
 - Scatterplot logic and Bayesian normalization  
 - Legend and rating computations  
 - Dataset preprocessing  
-- Technical write-up and report sections  
 - Co-design of interactions and debugging
