@@ -7,7 +7,7 @@
 
 ## Overview
 
-BostonNoms is an interactive data visualization web app built with **Leaflet.js**, **D3.js**, and **JavaScript**, designed to help users explore Boston restaurants through a data-driven and intuitive interface.
+BostonNoms is an interactive data visualization web app designed to help users explore Boston restaurants through a data-driven and intuitive interface.
 
 BostonNoms empowers users to:
 
